@@ -1,9 +1,10 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = join(__dirname, '..', 'data', 'db.json')
+const IS_SERVERLESS = !!process.env.VERCEL
 
 const DEFAULT_DB = {
   skills: [],
@@ -21,6 +22,7 @@ class Store {
   }
 
   _load() {
+    if (IS_SERVERLESS) return { ...DEFAULT_DB }
     try {
       if (existsSync(DB_PATH)) {
         const raw = readFileSync(DB_PATH, 'utf-8')
@@ -33,7 +35,14 @@ class Store {
   }
 
   _save() {
-    writeFileSync(DB_PATH, JSON.stringify(this.data, null, 2), 'utf-8')
+    if (IS_SERVERLESS) return
+    try {
+      const dir = dirname(DB_PATH)
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+      writeFileSync(DB_PATH, JSON.stringify(this.data, null, 2), 'utf-8')
+    } catch {
+      // ignore write errors in restricted environments
+    }
   }
 
   // Skills

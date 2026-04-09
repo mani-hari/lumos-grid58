@@ -93,27 +93,35 @@ app.get('/api/v1', (req, res) => {
   })
 })
 
-// Serve static frontend
-const distPath = join(__dirname, '..', 'dist')
-if (existsSync(distPath)) {
-  app.use(express.static(distPath))
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(join(distPath, 'index.html'))
-    }
-  })
-} else {
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'Lumos Grid API is running. Build the frontend with: npm run build',
-      api: '/api/v1',
+// Serve static frontend (local only — Vercel serves static files via CDN)
+if (!process.env.VERCEL) {
+  const distPath = join(__dirname, '..', 'dist')
+  if (existsSync(distPath)) {
+    app.use(express.static(distPath))
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api')) {
+        res.sendFile(join(distPath, 'index.html'))
+      }
     })
-  })
+  } else {
+    app.get('/', (req, res) => {
+      res.json({
+        message: 'Lumos Grid API is running. Build the frontend with: npm run build',
+        api: '/api/v1',
+      })
+    })
+  }
 }
 
-app.listen(PORT, () => {
-  console.log(`\n  ⚡ Lumos Grid — Hosted Skills Platform`)
-  console.log(`  → http://localhost:${PORT}`)
-  console.log(`  → API: http://localhost:${PORT}/api/v1`)
-  console.log(`  → ${store.getSkills().length} skills loaded\n`)
-})
+// Export for Vercel serverless
+export default app
+
+// Only listen when running locally (not on Vercel)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n  ⚡ Lumos Grid — Hosted Skills Platform`)
+    console.log(`  → http://localhost:${PORT}`)
+    console.log(`  → API: http://localhost:${PORT}/api/v1`)
+    console.log(`  → ${store.getSkills().length} skills loaded\n`)
+  })
+}
