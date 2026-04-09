@@ -30,13 +30,22 @@ app.use((req, res, next) => {
   next()
 })
 
-// Seed data if empty
-if (store.getSkills().length === 0) {
-  console.log('Seeding initial skills...')
-  seedSkills.forEach((skill) => store.createSkill(skill))
-  seedProjects.forEach((project) => store.createProject(project))
-  console.log(`Seeded ${seedSkills.length} skills and ${seedProjects.length} projects`)
-}
+// Load data from Redis on cold start, then seed if empty
+app.use(async (req, res, next) => {
+  try {
+    await store.ensureLoaded()
+    if (store.getSkills().length === 0) {
+      console.log('Seeding initial skills...')
+      seedSkills.forEach((skill) => store.createSkill(skill))
+      seedProjects.forEach((project) => store.createProject(project))
+      console.log(`Seeded ${seedSkills.length} skills and ${seedProjects.length} projects`)
+    }
+    next()
+  } catch (err) {
+    console.error('Data load error:', err)
+    next()
+  }
+})
 
 // API Routes
 app.use('/api/v1/skills', skillsRouter)

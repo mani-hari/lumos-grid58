@@ -1,10 +1,20 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { Redis } from '@upstash/redis'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = join(__dirname, '..', 'data', 'db.json')
 const IS_SERVERLESS = !!process.env.VERCEL
+const REDIS_KEY = 'lumos_grid_db'
+
+// Initialize Redis if credentials exist (Vercel KV or standalone Upstash)
+let redis = null
+const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
+const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
+if (redisUrl && redisToken) {
+  redis = new Redis({ url: redisUrl, token: redisToken })
+}
 
 const DEFAULT_DB = {
   skills: [],
@@ -18,11 +28,28 @@ const DEFAULT_DB = {
 
 class Store {
   constructor() {
-    this.data = this._load()
+    this._loaded = !redis // If no Redis, load from local file immediately
+    this.data = redis ? { ...DEFAULT_DB } : this._loadLocal()
   }
 
-  _load() {
-    if (IS_SERVERLESS) return { ...DEFAULT_DB }
+  // Called once per cold start — loads persisted data from Redis
+  async ensureLoaded() {
+    if (this._loaded) return
+    if (redis) {
+      try {
+        const raw = await redis.get(REDIS_KEY)
+        if (raw) {
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+          this.data = { ...DEFAULT_DB, ...parsed }
+        }
+      } catch (err) {
+        console.error('Redis load error:', err.message)
+      }
+    }
+    this._loaded = true
+  }
+
+  _loadLocal() {
     try {
       if (existsSync(DB_PATH)) {
         const raw = readFileSync(DB_PATH, 'utf-8')
@@ -35,13 +62,21 @@ class Store {
   }
 
   _save() {
-    if (IS_SERVERLESS) return
-    try {
-      const dir = dirname(DB_PATH)
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-      writeFileSync(DB_PATH, JSON.stringify(this.data, null, 2), 'utf-8')
-    } catch {
-      // ignore write errors in restricted environments
+    // Local file persistence
+    if (!IS_SERVERLESS) {
+      try {
+        const dir = dirname(DB_PATH)
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+        writeFileSync(DB_PATH, JSON.stringify(this.data, null, 2), 'utf-8')
+      } catch {
+        // ignore write errors
+      }
+    }
+    // Redis persistence (fire-and-forget for speed, data is already in memory)
+    if (redis) {
+      redis.set(REDIS_KEY, JSON.stringify(this.data)).catch((err) => {
+        console.error('Redis save error:', err.message)
+      })
     }
   }
 
@@ -160,7 +195,6 @@ class Store {
   deleteProject(id) {
     const idx = this.data.projects.findIndex((p) => p.id === id)
     if (idx === -1) return false
-    // Unlink skills from project
     this.data.skills.forEach((s) => {
       if (s.project_id === id) s.project_id = null
     })
@@ -172,7 +206,6 @@ class Store {
   // Access Logs
   logAccess(log) {
     this.data.accessLogs.push(log)
-    // Keep last 10000 logs
     if (this.data.accessLogs.length > 10000) {
       this.data.accessLogs = this.data.accessLogs.slice(-10000)
     }
@@ -309,17 +342,12 @@ class Store {
     )
 
     let score = 100
-    // Staleness penalty: -2 per day since last update (max -40)
     score -= Math.min(40, Math.floor(daysSinceUpdate * 2))
-    // Low usage penalty: -20 if no access in last 7 days
     if (recentLogs.length === 0) score -= 20
-    // Content length bonus: +10 if content > 500 chars
     if (skill.content.length > 500) score += 0
     else score -= 10
-    // Version bonus: +5 if multiple versions exist
     const versions = this.getVersions(skillId)
     if (versions.length > 1) score += 5
-    // Model diversity: +5 if used by multiple models
     const uniqueModels = new Set(logs.map((l) => l.model_used).filter(Boolean))
     if (uniqueModels.size > 1) score += 5
 
