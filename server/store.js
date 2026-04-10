@@ -6,7 +6,7 @@ import { Redis } from '@upstash/redis'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = join(__dirname, '..', 'data', 'db.json')
 const IS_SERVERLESS = !!process.env.VERCEL
-const REDIS_KEY = 'lumos_grid_db'
+const REDIS_KEY = 'doso_db'
 
 // Initialize Redis if credentials exist (Vercel KV or standalone Upstash)
 let redis = null
@@ -24,6 +24,7 @@ const DEFAULT_DB = {
   optimizations: [],
   skillVersions: [],
   webhooks: [],
+  scans: [],
 }
 
 class Store {
@@ -326,6 +327,29 @@ class Store {
     const idx = this.data.webhooks.findIndex((w) => w.id === id)
     if (idx === -1) return false
     this.data.webhooks.splice(idx, 1)
+    this._save()
+    return true
+  }
+
+  // Scans
+  createScan(scan) {
+    this.data.scans.push(scan)
+    this._save()
+    return scan
+  }
+
+  getScans() {
+    return this.data.scans.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  }
+
+  getScan(id) {
+    return this.data.scans.find((s) => s.id === id) || null
+  }
+
+  deleteScan(id) {
+    const idx = this.data.scans.findIndex((s) => s.id === id)
+    if (idx === -1) return false
+    this.data.scans.splice(idx, 1)
     this._save()
     return true
   }
