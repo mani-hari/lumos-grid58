@@ -377,7 +377,7 @@ export default function Dashboard() {
             doso.dev
           </h1>
           <p style={{ fontSize: 17, color: '#000', fontWeight: 500, marginBottom: 20 }}>
-            Continuous optimisation for your AI Skills and Prompts.
+            Make your Skills.md get better while you sleep.
           </p>
           <ul style={{ fontSize: 14, color: '#555', lineHeight: 1.8, listStyle: 'none', padding: 0, margin: 0, textAlign: 'left', maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
             <li style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
