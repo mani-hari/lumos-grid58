@@ -194,6 +194,8 @@ Zero dependencies. Uses only `node:fs`, `node:path`, `node:https`, `node:http`, 
 7. **Onboarding flow** — empty-state page with GitHub connect + CLI command
 8. **RepoConnect page** — scan results with summary cards, tech stack badges, embedded prompt warnings, file tree
 9. **CLI tool** (`@doso-dev/cli`) — 9 commands, zero dependencies, beautiful terminal output
+10. **Scan timeout fix** — parallelized all GitHub API fetches, reduced caps (20 md / 30 code / 5 config), added smart file filtering to stay within Vercel's 10s limit
+11. **Error handling** — API client now handles non-JSON responses (Vercel HTML error pages) gracefully with user-friendly messages
 
 ## Not Yet Built
 
