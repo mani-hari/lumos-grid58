@@ -373,9 +373,12 @@ export default function Dashboard() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 24px' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', paddingTop: 80, marginBottom: 40 }}>
-          <h1 style={{ fontSize: 36, fontWeight: 700, color: '#000', letterSpacing: '-1.5px', marginBottom: 20 }}>
+          <h1 style={{ fontSize: 36, fontWeight: 700, color: '#000', letterSpacing: '-1.5px', marginBottom: 8 }}>
             doso.dev
           </h1>
+          <p style={{ fontSize: 17, color: '#000', fontWeight: 500, marginBottom: 20 }}>
+            Your prompts get better while you sleep.
+          </p>
           <ul style={{ fontSize: 14, color: '#555', lineHeight: 1.8, listStyle: 'none', padding: 0, margin: 0, textAlign: 'left', maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
             <li style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <span style={{ color: '#D4A843', flexShrink: 0 }}>&bull;</span>
