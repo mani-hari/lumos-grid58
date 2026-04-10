@@ -1,0 +1,12 @@
+{
+  "name": "@doso-dev/cli",
+  "version": "0.1.0",
+  "description": "doso — AI skills and prompt optimization from your terminal",
+  "type": "module",
+  "bin": {
+    "doso": "./bin/doso.js"
+  },
+  "files": ["bin/", "lib/", "README.md"],
+  "keywords": ["ai", "prompts", "skills", "optimization", "llm"],
+  "license": "MIT"
+}

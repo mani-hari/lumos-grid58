@@ -1,76 +1,118 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard,
-  Sparkles,
+  FileText,
   FolderOpen,
   BarChart3,
-  BookTemplate,
   Settings,
   Plus,
-  Zap,
+  LayoutTemplate,
+  Github,
 } from 'lucide-react'
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Skills' },
+  { to: '/', icon: FileText, label: 'Skills' },
+  { to: '/connect', icon: Github, label: 'Connect' },
   { to: '/projects', icon: FolderOpen, label: 'Projects' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/templates', icon: BookTemplate, label: 'Templates' },
+  { to: '/templates', icon: LayoutTemplate, label: 'Templates' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 export default function Sidebar() {
   const navigate = useNavigate()
+  const [expanded, setExpanded] = useState(false)
 
   return (
-    <aside className="w-56 h-screen border-r border-gray-200 bg-gray-50/50 flex flex-col">
+    <aside
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+      className="h-screen flex flex-col shrink-0 transition-all duration-150 ease-in-out"
+      style={{
+        width: expanded ? 200 : 48,
+        borderRight: '1px solid #222',
+        background: '#fff',
+      }}
+    >
       {/* Logo */}
-      <div className="px-5 py-4 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gray-900 rounded-lg flex items-center justify-center">
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-gray-900 leading-tight">Lumos Grid</h1>
-            <p className="text-[10px] text-gray-400 leading-tight">Hosted Skills</p>
-          </div>
-        </div>
+      <div
+        className="flex items-center shrink-0"
+        style={{
+          height: 48,
+          borderBottom: '1px solid #e5e5e5',
+          padding: expanded ? '0 16px' : '0',
+          justifyContent: expanded ? 'flex-start' : 'center',
+        }}
+      >
+        {expanded ? (
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#000', letterSpacing: '-0.5px' }}>
+            doso
+          </span>
+        ) : (
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#000' }}>
+            d
+          </span>
+        )}
       </div>
 
-      {/* New Skill Button */}
-      <div className="px-3 pt-4 pb-2">
+      {/* New Button */}
+      <div
+        className="shrink-0"
+        style={{ padding: expanded ? '12px 8px 4px' : '12px 6px 4px' }}
+      >
         <button
           onClick={() => navigate('/skills/new')}
-          className="w-full btn-primary justify-center text-xs"
+          className="btn-primary flex items-center justify-center"
+          style={{
+            width: '100%',
+            padding: expanded ? '6px 12px' : '6px',
+            fontSize: 12,
+            borderRadius: 4,
+          }}
         >
-          <Plus className="w-3.5 h-3.5" />
-          New Skill
+          <Plus className="w-4 h-4" style={{ flexShrink: 0 }} />
+          {expanded && <span style={{ marginLeft: 6 }}>New</span>}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-2 space-y-0.5">
+      <nav className="flex-1" style={{ padding: '8px 0' }}>
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`
+              `sidebar-nav-item${isActive ? ' active' : ''}`
             }
+            style={{
+              padding: expanded ? '8px 12px' : '8px 0',
+              justifyContent: expanded ? 'flex-start' : 'center',
+              gap: expanded ? 12 : 0,
+            }}
           >
-            <Icon className="w-4 h-4" />
-            {label}
+            <Icon className="w-4 h-4" style={{ flexShrink: 0 }} />
+            {expanded && (
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                {label}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-gray-200">
-        <p className="text-[10px] text-gray-400">v0.1.0</p>
+      <div
+        className="shrink-0"
+        style={{
+          borderTop: '1px solid #e5e5e5',
+          padding: expanded ? '8px 16px' : '8px',
+          textAlign: 'center',
+        }}
+      >
+        <span style={{ fontSize: 10, color: '#aaa' }}>
+          {expanded ? 'v0.1.0' : ''}
+        </span>
       </div>
     </aside>
   )

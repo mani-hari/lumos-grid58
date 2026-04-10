@@ -6,6 +6,7 @@ import Projects from './pages/Projects'
 import Analytics from './pages/Analytics'
 import Templates from './pages/Templates'
 import Settings from './pages/Settings'
+import RepoConnect from './pages/RepoConnect'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/connect" element={<RepoConnect />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

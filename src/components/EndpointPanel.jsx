@@ -11,13 +11,23 @@ function CopyButton({ text }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1 rounded hover:bg-gray-200 transition-colors"
+      className="flex items-center justify-center"
+      style={{
+        padding: 4,
+        borderRadius: 2,
+        border: 0,
+        background: 'transparent',
+        cursor: 'pointer',
+        transition: 'background 100ms',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = '#e5e5e5' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
       title="Copy to clipboard"
     >
       {copied ? (
-        <Check className="w-3.5 h-3.5 text-green-600" />
+        <Check className="w-3.5 h-3.5" style={{ color: '#000' }} />
       ) : (
-        <Copy className="w-3.5 h-3.5 text-gray-400" />
+        <Copy className="w-3.5 h-3.5" style={{ color: '#aaa' }} />
       )}
     </button>
   )
@@ -26,8 +36,8 @@ function CopyButton({ text }) {
 export default function EndpointPanel({ skill }) {
   if (!skill?.id) {
     return (
-      <div className="p-4 text-center text-gray-400 text-sm">
-        <Globe className="w-8 h-8 mx-auto mb-2 opacity-50" />
+      <div style={{ padding: 16, textAlign: 'center', color: '#aaa', fontSize: 13 }}>
+        <Globe className="w-8 h-8 mx-auto" style={{ marginBottom: 8, opacity: 0.4 }} />
         <p>Save your skill to generate endpoints</p>
       </div>
     )
@@ -41,8 +51,6 @@ export default function EndpointPanel({ skill }) {
       method: 'GET',
       url: `${base}/api/v1/skills/${skill.id}`,
       description: 'Full skill object as JSON',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
     },
     {
       label: 'Raw Content',
@@ -50,8 +58,6 @@ export default function EndpointPanel({ skill }) {
       method: 'GET',
       url: `${base}/api/v1/skills/${skill.id}/raw`,
       description: 'Plain markdown — paste this in your agent',
-      color: 'text-green-600',
-      bg: 'bg-green-50',
     },
     {
       label: 'MCP Resource',
@@ -59,8 +65,6 @@ export default function EndpointPanel({ skill }) {
       method: 'GET',
       url: `${base}/api/v1/mcp/skills/${skill.id}`,
       description: 'MCP-compatible resource format',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
     },
   ]
 
@@ -69,69 +73,71 @@ export default function EndpointPanel({ skill }) {
 
   return (
     <div className="space-y-3 animate-fade-in">
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1">
+      <h3 style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 4px' }}>
         Endpoints
       </h3>
 
       {endpoints.map((ep) => (
         <div key={ep.label} className="endpoint-box">
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
             <div className="flex items-center gap-1.5">
-              <ep.icon className={`w-3.5 h-3.5 ${ep.color}`} />
-              <span className="font-semibold text-gray-700 text-xs">{ep.label}</span>
+              <ep.icon className="w-3.5 h-3.5" style={{ color: '#666' }} />
+              <span style={{ fontWeight: 600, color: '#000', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>{ep.label}</span>
             </div>
             <CopyButton text={ep.url} />
           </div>
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className={`${ep.bg} ${ep.color} px-1.5 py-0.5 rounded text-[10px] font-bold`}>
+          <div className="flex items-center gap-1.5" style={{ marginBottom: 4 }}>
+            <span style={{
+              background: '#000',
+              color: '#fff',
+              padding: '1px 6px',
+              borderRadius: 2,
+              fontSize: 10,
+              fontWeight: 700,
+              fontFamily: 'JetBrains Mono, monospace',
+            }}>
               {ep.method}
             </span>
-            <code className="text-[11px] text-gray-600 truncate block flex-1">{ep.url}</code>
+            <code style={{ fontSize: 11, color: '#666' }} className="truncate block flex-1">{ep.url}</code>
           </div>
-          <p className="text-[10px] text-gray-400">{ep.description}</p>
+          <p style={{ fontSize: 10, color: '#aaa' }}>{ep.description}</p>
         </div>
       ))}
 
       {/* Quick Use */}
-      <div className="border-t border-gray-200 pt-3 mt-3">
-        <h4 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+      <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: 12, marginTop: 12 }}>
+        <h4 className="flex items-center gap-1.5" style={{ fontSize: 11, fontWeight: 600, color: '#888', marginBottom: 8 }}>
           <Terminal className="w-3.5 h-3.5" />
           Quick Use
         </h4>
         <div className="endpoint-box">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-500">cURL</span>
+          <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+            <span style={{ fontSize: 10, color: '#888' }}>cURL</span>
             <CopyButton text={curlCmd} />
           </div>
-          <code className="text-[11px] text-gray-600 break-all">{curlCmd}</code>
+          <code style={{ fontSize: 11, color: '#333', wordBreak: 'break-all' }}>{curlCmd}</code>
         </div>
-        <div className="endpoint-box mt-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-500">Agent Config</span>
+        <div className="endpoint-box" style={{ marginTop: 8 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+            <span style={{ fontSize: 10, color: '#888' }}>Agent Config</span>
             <CopyButton text={agentSnippet} />
           </div>
-          <pre className="text-[11px] text-gray-600 whitespace-pre-wrap">{agentSnippet}</pre>
+          <pre style={{ fontSize: 11, color: '#333', whiteSpace: 'pre-wrap' }}>{agentSnippet}</pre>
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Health Score */}
       {skill.health && (
-        <div className="border-t border-gray-200 pt-3">
-          <h4 className="text-xs font-semibold text-gray-500 mb-2">Health Score</h4>
+        <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: 12 }}>
+          <h4 style={{ fontSize: 11, fontWeight: 600, color: '#888', marginBottom: 8 }}>Health Score</h4>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-gray-200 rounded-full h-2">
+            <div className="flex-1 health-bar" style={{ height: 4 }}>
               <div
-                className={`h-2 rounded-full transition-all ${
-                  skill.health.score >= 70
-                    ? 'bg-green-500'
-                    : skill.health.score >= 40
-                    ? 'bg-amber-500'
-                    : 'bg-red-500'
-                }`}
+                className="health-bar-fill"
                 style={{ width: `${skill.health.score}%` }}
               />
             </div>
-            <span className="text-xs font-mono font-semibold text-gray-700">
+            <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: '#000' }}>
               {skill.health.score}
             </span>
           </div>

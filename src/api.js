@@ -68,4 +68,15 @@ export const api = {
   },
   applyOptimization: (data) => request('/optimizer/apply', { method: 'POST', body: JSON.stringify(data) }),
   getModels: () => request('/optimizer/models'),
+
+  // GitHub
+  githubAuthUrl: () => request('/github/auth'),
+  githubCallback: (code) => request(`/github/callback?code=${code}`),
+  githubRepos: (token) => request('/github/repos', { headers: { Authorization: `Bearer ${token}` } }),
+  scanRepo: (data) => request('/github/scan', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Analysis
+  analyzeSkill: (data) => request('/analyze/skill', { method: 'POST', body: JSON.stringify(data) }),
+  analyzeProject: (data) => request('/analyze/project', { method: 'POST', body: JSON.stringify(data) }),
+  optimizeSkill: (data) => request('/analyze/optimize', { method: 'POST', body: JSON.stringify(data) }),
 }

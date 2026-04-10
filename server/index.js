@@ -9,6 +9,8 @@ import { skillsRouter } from './routes/skills.js'
 import { projectsRouter } from './routes/projects.js'
 import { analyticsRouter } from './routes/analytics.js'
 import { optimizerRouter } from './routes/optimizer.js'
+import { githubRouter } from './routes/github.js'
+import { analyzeRouter } from './routes/analyze.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -52,6 +54,8 @@ app.use('/api/v1/skills', skillsRouter)
 app.use('/api/v1/projects', projectsRouter)
 app.use('/api/v1/analytics', analyticsRouter)
 app.use('/api/v1/optimizer', optimizerRouter)
+app.use('/api/v1/github', githubRouter)
+app.use('/api/v1/analyze', analyzeRouter)
 
 // MCP-compatible skill resource endpoint
 app.get('/api/v1/mcp/skills/:id', (req, res) => {
@@ -90,13 +94,15 @@ app.get('/api/v1/mcp/skills/:id', (req, res) => {
 // API info endpoint
 app.get('/api/v1', (req, res) => {
   res.json({
-    name: 'Lumos Grid — Hosted Skills Platform',
+    name: 'doso — Hosted Skills Platform',
     version: '0.1.0',
     endpoints: {
       skills: '/api/v1/skills',
       projects: '/api/v1/projects',
       analytics: '/api/v1/analytics',
       optimizer: '/api/v1/optimizer',
+      github: '/api/v1/github',
+      analyze: '/api/v1/analyze',
       mcp: '/api/v1/mcp/skills/:id',
     },
   })
@@ -115,7 +121,7 @@ if (!process.env.VERCEL) {
   } else {
     app.get('/', (req, res) => {
       res.json({
-        message: 'Lumos Grid API is running. Build the frontend with: npm run build',
+        message: 'doso API is running. Build the frontend with: npm run build',
         api: '/api/v1',
       })
     })
@@ -128,7 +134,7 @@ export default app
 // Only listen when running locally (not on Vercel)
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`\n  ⚡ Lumos Grid — Hosted Skills Platform`)
+    console.log(`\n  ⚡ doso — Hosted Skills Platform`)
     console.log(`  → http://localhost:${PORT}`)
     console.log(`  → API: http://localhost:${PORT}/api/v1`)
     console.log(`  → ${store.getSkills().length} skills loaded\n`)

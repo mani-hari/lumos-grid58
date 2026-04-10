@@ -1,10 +1,104 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, Filter, Grid3x3, List, Download, Upload } from 'lucide-react'
+import { Search, Plus, Grid3x3, List, Upload, Copy, Check, Github } from 'lucide-react'
 import { api } from '../api'
 import SkillCard from '../components/SkillCard'
 
 const categories = ['All', 'Design', 'Frontend', 'Backend', 'Quality', 'DevOps', 'Testing', 'General']
+
+function CopyInline({ text }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        position: 'absolute',
+        right: 12,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        padding: 4,
+        background: 'transparent',
+        border: 0,
+        cursor: 'pointer',
+        color: copied ? '#fff' : '#888',
+      }}
+      title="Copy"
+    >
+      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+    </button>
+  )
+}
+
+function OnboardingView({ navigate }) {
+  const [repoUrl, setRepoUrl] = useState('')
+
+  return (
+    <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 48px)' }}>
+      <div style={{ maxWidth: 520, width: '100%', textAlign: 'center', padding: '0 24px' }}>
+        {/* Logo */}
+        <h1 style={{ fontSize: 32, fontWeight: 700, color: '#000', letterSpacing: '-1px', marginBottom: 16 }}>
+          doso
+        </h1>
+
+        <p style={{ fontSize: 16, color: '#666', marginBottom: 40, lineHeight: 1.6 }}>
+          Connect your repository to start<br />
+          optimizing your AI skills and prompts.
+        </p>
+
+        {/* Repo URL input */}
+        <div style={{ marginBottom: 16 }}>
+          <input
+            type="text"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+            placeholder="https://github.com/user/repo"
+            className="input"
+            style={{
+              fontSize: 14,
+              padding: '14px 16px',
+              textAlign: 'center',
+              border: '2px dashed #ddd',
+              borderRadius: 6,
+              background: '#f5f5f5',
+            }}
+          />
+        </div>
+
+        <button
+          onClick={() => navigate('/connect', { state: { repoUrl } })}
+          className="btn-primary"
+          style={{
+            width: '100%',
+            justifyContent: 'center',
+            padding: '12px 24px',
+            fontSize: 14,
+            borderRadius: 6,
+            marginBottom: 32,
+          }}
+        >
+          <Github className="w-4 h-4" />
+          Connect with GitHub
+        </button>
+
+        <div className="separator" style={{ marginBottom: 24 }}>or</div>
+
+        <p style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>
+          Run in your terminal:
+        </p>
+
+        <div className="terminal-box" style={{ textAlign: 'left', position: 'relative' }}>
+          <span style={{ color: '#888' }}>$</span> npx @doso-dev/cli scan ./
+          <CopyInline text="npx @doso-dev/cli scan ./" />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -47,13 +141,17 @@ export default function Dashboard() {
     }
   }
 
+  if (!loading && skills.length === 0 && !search && category === 'All') {
+    return <OnboardingView navigate={navigate} />
+  }
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div style={{ padding: 24, maxWidth: 1120, margin: '0 auto' }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between" style={{ marginBottom: 24 }}>
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Skills</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#000' }}>Skills</h1>
+          <p style={{ fontSize: 13, color: '#888', marginTop: 2 }}>
             {skills.length} skill{skills.length !== 1 ? 's' : ''} in your library
           </p>
         </div>
@@ -77,13 +175,14 @@ export default function Dashboard() {
 
       {/* Import Panel */}
       {showImport && (
-        <div className="card mb-4 animate-fade-in">
-          <h3 className="text-sm font-semibold mb-2">Import Skill</h3>
+        <div className="card animate-fade-in" style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#000' }}>Import Skill</h3>
           <textarea
             value={importData || ''}
             onChange={(e) => setImportData(e.target.value)}
             placeholder='Paste exported skill JSON here...'
-            className="input font-mono text-xs h-32 mb-2"
+            className="input"
+            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, height: 128, marginBottom: 8, resize: 'none' }}
           />
           <div className="flex gap-2">
             <button onClick={handleImport} className="btn-primary btn-sm">Import</button>
@@ -93,27 +192,43 @@ export default function Dashboard() {
       )}
 
       {/* Search & Filter Bar */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3" style={{ marginBottom: 16 }}>
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute" style={{ left: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#aaa' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search skills by name, content, or tags..."
-            className="input pl-9"
+            className="input"
+            style={{ paddingLeft: 36 }}
           />
         </div>
-        <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+        <div className="flex items-center" style={{ border: '1px solid #222', borderRadius: 4, overflow: 'hidden' }}>
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 ${viewMode === 'grid' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+            style={{
+              padding: 8,
+              background: viewMode === 'grid' ? '#000' : '#fff',
+              color: viewMode === 'grid' ? '#fff' : '#888',
+              border: 0,
+              cursor: 'pointer',
+              display: 'flex',
+            }}
           >
             <Grid3x3 className="w-4 h-4" />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 ${viewMode === 'list' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+            style={{
+              padding: 8,
+              background: viewMode === 'list' ? '#000' : '#fff',
+              color: viewMode === 'list' ? '#fff' : '#888',
+              border: 0,
+              cursor: 'pointer',
+              display: 'flex',
+              borderLeft: '1px solid #222',
+            }}
           >
             <List className="w-4 h-4" />
           </button>
@@ -121,16 +236,23 @@ export default function Dashboard() {
       </div>
 
       {/* Category Tabs */}
-      <div className="flex items-center gap-1 mb-5 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1 overflow-x-auto" style={{ marginBottom: 20, paddingBottom: 4 }}>
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setCategory(cat)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
-              category === cat
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-            }`}
+            style={{
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+              borderRadius: 100,
+              whiteSpace: 'nowrap',
+              border: category === cat ? '1px solid #000' : '1px solid transparent',
+              background: category === cat ? '#000' : 'transparent',
+              color: category === cat ? '#fff' : '#888',
+              cursor: 'pointer',
+              transition: 'all 100ms',
+            }}
           >
             {cat}
           </button>
@@ -139,14 +261,13 @@ export default function Dashboard() {
 
       {/* Skills Grid/List */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400 text-sm">Loading skills...</div>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#aaa', fontSize: 13 }}>
+          Loading skills...
+        </div>
       ) : skills.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Filter className="w-6 h-6 text-gray-400" />
-          </div>
-          <p className="text-sm text-gray-500 mb-1">No skills found</p>
-          <p className="text-xs text-gray-400 mb-4">
+        <div style={{ textAlign: 'center', padding: '64px 0' }}>
+          <p style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>No skills found</p>
+          <p style={{ fontSize: 12, color: '#aaa', marginBottom: 16 }}>
             {search ? 'Try a different search query' : 'Create your first skill to get started'}
           </p>
           <button onClick={() => navigate('/skills/new')} className="btn-primary btn-sm">
