@@ -82,6 +82,7 @@ export const api = {
   githubCallback: (code) => request(`/github/callback?code=${code}`),
   githubRepos: (token) => request('/github/repos', { headers: { Authorization: `Bearer ${token}` } }),
   scanRepo: (data) => request('/github/scan', { method: 'POST', body: JSON.stringify(data) }),
+  importRepo: (data) => request('/github/import', { method: 'POST', body: JSON.stringify(data) }),
 
   // Analysis
   analyzeSkill: (data) => request('/analyze/skill', { method: 'POST', body: JSON.stringify(data) }),

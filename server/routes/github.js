@@ -259,6 +259,162 @@ githubRouter.post('/scan', async (req, res) => {
   }
 })
 
+// POST /api/v1/github/import — Full pipeline: scan → create project → import skills
+githubRouter.post('/import', async (req, res) => {
+  const { repo, branch, token } = req.body
+  if (!repo || !token) {
+    return res.status(400).json({ error: 'repo and token are required' })
+  }
+
+  try {
+    // 1. Determine the branch to scan
+    let targetBranch = branch || 'main'
+    try {
+      targetBranch = branch || await getDefaultBranch(repo, token)
+    } catch (e) {
+      console.error('getDefaultBranch failed, using "main":', e.message)
+    }
+
+    // 2. Fetch the file tree
+    const tree = await fetchTree(repo, targetBranch, token)
+    if (!tree) {
+      return res.status(404).json({ error: 'Could not fetch repo tree. Check repo name and permissions.' })
+    }
+
+    // 3. Classify files
+    const mdFiles = []
+    const codeFiles = []
+    const configFiles = []
+
+    for (const item of tree) {
+      if (item.type !== 'blob') continue
+      const path = item.path
+      const ext = getExtension(path)
+      const basename = getBasename(path)
+
+      if (ext === MD_EXTENSION) {
+        mdFiles.push(item)
+      } else if (CODE_EXTENSIONS.has(ext)) {
+        codeFiles.push(item)
+      }
+
+      if (
+        basename === 'package.json' ||
+        basename === 'next.config.js' ||
+        basename === 'next.config.mjs' ||
+        basename === 'next.config.ts' ||
+        basename === 'tailwind.config.js' ||
+        basename === 'tailwind.config.ts' ||
+        basename === 'tsconfig.json' ||
+        basename === 'vite.config.ts' ||
+        basename === 'vite.config.js' ||
+        basename === '.eslintrc.json' ||
+        basename === 'pyproject.toml' ||
+        basename === 'Cargo.toml' ||
+        basename === 'go.mod'
+      ) {
+        configFiles.push(item)
+      }
+    }
+
+    // 4. Run scan tasks in parallel
+    const [skills, promptsInCode, metadata] = await Promise.all([
+      fetchMdFiles(repo, targetBranch, mdFiles, token).catch(() => []),
+      scanCodeForPrompts(repo, targetBranch, codeFiles, token).catch(() => []),
+      detectMetadata(repo, targetBranch, configFiles, token).catch(() => ({ repo, branch: targetBranch })),
+    ])
+
+    // 5. Build condensed tree
+    const relevantPaths = [
+      ...skills.map((s) => s.path),
+      ...promptsInCode.map((p) => p.path),
+    ]
+    const condensedTree = buildCondensedTree(relevantPaths)
+
+    // 6. Store the scan result
+    const scan = {
+      id: `scan_${uuid().slice(0, 12)}`,
+      repo,
+      branch: targetBranch,
+      skills_count: skills.length,
+      prompts_in_code_count: promptsInCode.length,
+      created_at: new Date().toISOString(),
+    }
+    store.createScan(scan)
+
+    // 7. Create a project named after the repo
+    const repoName = repo.includes('/') ? repo.split('/').pop() : repo
+    const project = {
+      id: uuid(),
+      name: repoName,
+      description: `Imported from GitHub repo ${repo}`,
+      api_key: `sk_${uuid().replace(/-/g, '')}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    store.createProject(project)
+
+    // 8. Map classifyMdFile types to categories
+    const categoryMap = {
+      prompt: 'General',
+      claude_instructions: 'General',
+      cursor_rules: 'General',
+      skill: 'General',
+      instructions: 'General',
+      readme: 'General',
+      contributing: 'General',
+      changelog: 'General',
+      documentation: 'General',
+    }
+
+    // 9. Create a skill for each discovered .md file
+    const createdSkills = []
+    for (const mdSkill of skills) {
+      const nameWithoutExt = mdSkill.name.endsWith('.md')
+        ? mdSkill.name.slice(0, -3)
+        : mdSkill.name
+      const skill = {
+        id: uuid(),
+        name: nameWithoutExt,
+        description: '',
+        content: mdSkill.content,
+        category: categoryMap[mdSkill.type] || 'General',
+        tags: [mdSkill.path, mdSkill.type],
+        is_public: true,
+        version: 1,
+        project_id: project.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      store.createSkill(skill)
+      createdSkills.push(skill)
+    }
+
+    // 10. Return the full result
+    res.json({
+      data: {
+        project,
+        skills: createdSkills,
+        scan: {
+          scan_id: scan.id,
+          tree: condensedTree,
+          prompts_in_code: promptsInCode,
+          metadata,
+        },
+        summary: {
+          skills_imported: createdSkills.length,
+          prompts_found: promptsInCode.length,
+          repo,
+          branch: targetBranch,
+        },
+      },
+    })
+  } catch (err) {
+    console.error('Import error:', err)
+    res.status(500).json({ error: 'Import failed: ' + err.message })
+  }
+})
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

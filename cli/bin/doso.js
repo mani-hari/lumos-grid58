@@ -12,6 +12,7 @@ import { readFile, writeFile, access } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createInterface } from 'node:readline';
 
 // ── Arg parser ────────────────────────────────────────────
 
@@ -103,6 +104,30 @@ function detectCurrentBranch(dir) {
     return match ? match[1] : null;
   } catch {
     return null;
+  }
+}
+
+// ── Prompt helper ────────────────────────────────────────
+
+function ask(question) {
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+function openBrowser(url) {
+  try {
+    const platform = process.platform;
+    if (platform === 'darwin') execSync(`open "${url}"`);
+    else if (platform === 'win32') execSync(`start "" "${url}"`);
+    else execSync(`xdg-open "${url}" 2>/dev/null || sensible-browser "${url}"`);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -209,6 +234,78 @@ async function cmdScan(positional, flags) {
   }
 
   console.log('');
+
+  // ── Post-scan: offer to import to doso.dev ──
+  if (results.skills.length > 0 && !flags.json) {
+    const answer = await ask(
+      `  ${d.boldWhite('Import these skills to doso.dev?')} ${d.gray('(Y/n)')} `
+    );
+
+    if (!answer || answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
+      const api = await getApi();
+
+      // Detect git remote for project name
+      const repoUrl = detectGitRemote(targetPath) || basename(targetPath);
+      const repoName = repoUrl
+        .replace(/^https?:\/\/github\.com\//, '')
+        .replace(/\.git$/, '')
+        .split('/')
+        .pop() || basename(targetPath);
+
+      const sp2 = d.spinner('Creating project and importing skills...');
+
+      try {
+        // Create project
+        const projectRes = await api.createSkill({
+          name: repoName,
+          description: `Imported from ${repoUrl}`,
+        });
+
+        // Import each skill
+        let imported = 0;
+        for (const skill of results.skills) {
+          try {
+            const content = readFileSync(skill.fullPath, 'utf-8');
+            await api.pushSkill(skill.title || skill.name.replace(/\.md$/, ''), content);
+            imported++;
+            sp2.update(`Importing skills... (${imported}/${results.skills.length})`);
+          } catch {
+            // skip individual failures
+          }
+        }
+
+        sp2.stop(`Imported ${d.boldYellow(String(imported))} skills to doso.dev`);
+
+        const baseUrl = api.getApiBaseUrl();
+        const projectUrl = baseUrl;
+
+        console.log('');
+        console.log(`  ${d.boldWhite('Your project is ready:')}`);
+        console.log(`  ${d.cyan(projectUrl)}`);
+        console.log('');
+
+        const openAnswer = await ask(
+          `  ${d.gray('Press Enter to open in browser, or')} ${d.gray('q to skip:')} `
+        );
+
+        if (!openAnswer || openAnswer === '') {
+          const opened = openBrowser(projectUrl);
+          if (opened) {
+            d.success('Opened in browser');
+          } else {
+            console.log(`  ${d.gray('Open this URL in your browser:')}`);
+            console.log(`  ${d.cyan(projectUrl)}`);
+          }
+        }
+      } catch (err) {
+        sp2.fail('Import failed');
+        console.log(`  ${d.gray(err.message)}`);
+        console.log(`  ${d.gray('You can still import manually at')} ${d.cyan(api.getApiBaseUrl())}`);
+      }
+
+      console.log('');
+    }
+  }
 }
 
 // ── doso connect ──────────────────────────────────────────
