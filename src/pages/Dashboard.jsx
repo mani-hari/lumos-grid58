@@ -369,17 +369,27 @@ export default function Dashboard() {
 
   // ── Landing (default) ──
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto" style={{ background: '#fafafa' }}>
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 24px' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', paddingTop: 80, marginBottom: 48 }}>
-          <h1 style={{ fontSize: 36, fontWeight: 700, color: '#000', letterSpacing: '-1.5px', marginBottom: 12 }}>
-            doso
+        <div style={{ textAlign: 'center', paddingTop: 80, marginBottom: 40 }}>
+          <h1 style={{ fontSize: 36, fontWeight: 700, color: '#000', letterSpacing: '-1.5px', marginBottom: 20 }}>
+            doso.dev
           </h1>
-          <p style={{ fontSize: 16, color: '#666', lineHeight: 1.6 }}>
-            Connect your repository to discover, import,<br />
-            and optimize your AI skills and prompts.
-          </p>
+          <ul style={{ fontSize: 14, color: '#555', lineHeight: 1.8, listStyle: 'none', padding: 0, margin: 0, textAlign: 'left', maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
+            <li style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ color: '#D4A843', flexShrink: 0 }}>&bull;</span>
+              Connect your repo and auto-optimise AI skills &amp; prompts
+            </li>
+            <li style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ color: '#D4A843', flexShrink: 0 }}>&bull;</span>
+              Auto-refine when models evolve
+            </li>
+            <li style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ color: '#D4A843', flexShrink: 0 }}>&bull;</span>
+              Reduce tokens, cut cost, improve output quality
+            </li>
+          </ul>
         </div>
 
         {/* Main input */}

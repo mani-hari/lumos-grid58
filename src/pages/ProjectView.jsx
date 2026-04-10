@@ -707,12 +707,46 @@ export default function ProjectView() {
           >
             <Home className="w-3.5 h-3.5" />
           </button>
-          {breadcrumbs.map((crumb, i) => (
-            <span key={i} className="flex items-center gap-1" style={{ fontSize: 12, color: i === breadcrumbs.length - 1 ? '#000' : '#888' }}>
-              <ChevronRight className="w-3 h-3" style={{ color: '#ddd' }} />
-              <span style={{ fontWeight: i === breadcrumbs.length - 1 ? 600 : 400 }} className="truncate">{crumb}</span>
-            </span>
-          ))}
+          {breadcrumbs.map((crumb, i) => {
+            const isLast = i === breadcrumbs.length - 1
+            const isProjectName = i === 0
+            const isClickable = !isLast
+            return (
+              <span key={i} className="flex items-center gap-1" style={{ fontSize: 12, color: isLast ? '#000' : '#888' }}>
+                <ChevronRight className="w-3 h-3" style={{ color: '#ddd' }} />
+                {isClickable ? (
+                  <button
+                    onClick={() => {
+                      if (isProjectName) {
+                        // Deselect file — show project root
+                        if (dirty && !confirm('You have unsaved changes. Discard?')) return
+                        setSelectedSkill(null)
+                        setContent('')
+                        setDirty(false)
+                      }
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 0,
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      fontWeight: 400,
+                      color: '#888',
+                      padding: 0,
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#000' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#888' }}
+                    className="truncate"
+                  >
+                    {crumb}
+                  </button>
+                ) : (
+                  <span style={{ fontWeight: 600 }} className="truncate">{crumb}</span>
+                )}
+              </span>
+            )
+          })}
           {dirty && (
             <span style={{ fontSize: 10, color: '#D4A843', fontWeight: 500, marginLeft: 8 }}>Unsaved</span>
           )}
