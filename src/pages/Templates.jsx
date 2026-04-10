@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookTemplate, Plus, Sparkles, Code, Paintbrush, Server, Shield, TestTube, GitBranch, Workflow, FileCode } from 'lucide-react'
+import { Plus, Code, Paintbrush, Server, Shield, TestTube, GitBranch, Workflow, FileCode } from 'lucide-react'
 import { api } from '../api'
 
 const templates = [
@@ -170,7 +170,7 @@ You write effective, maintainable tests.
 ## Unit Test Principles
 - Test ONE behavior per test
 - Use descriptive names: "should reject expired tokens"
-- Arrange → Act → Assert pattern
+- Arrange > Act > Assert pattern
 - No logic in tests (no if/loops)
 - Test edge cases: empty, null, boundary values
 
@@ -337,10 +337,10 @@ export default function Templates() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Skill Templates</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+    <div style={{ padding: 24, maxWidth: 1120, margin: '0 auto' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 600, color: '#000' }}>Skill Templates</h1>
+        <p style={{ fontSize: 13, color: '#888', marginTop: 2 }}>
           Start from a template and customize it for your needs
         </p>
       </div>
@@ -349,19 +349,33 @@ export default function Templates() {
         {templates.map((t) => {
           const Icon = t.icon
           return (
-            <div key={t.id} className="card hover:border-gray-300 transition-all group">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200 transition-colors shrink-0">
-                  <Icon className="w-5 h-5 text-gray-500" />
+            <div
+              key={t.id}
+              className="card group"
+              style={{ transition: 'border-color 100ms' }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000' }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#222' }}
+            >
+              <div className="flex items-start gap-3" style={{ marginBottom: 12 }}>
+                <div
+                  className="flex items-center justify-center shrink-0"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    background: '#f5f5f5',
+                    borderRadius: 4,
+                  }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: '#666' }} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">{t.name}</h3>
-                  <span className="badge-gray text-[10px]">{t.category}</span>
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: '#000' }}>{t.name}</h3>
+                  <span className="badge-gray" style={{ fontSize: 10 }}>{t.category}</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mb-4 leading-relaxed">{t.description}</p>
+              <p style={{ fontSize: 12, color: '#888', marginBottom: 16, lineHeight: 1.5 }}>{t.description}</p>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-400">
+                <span style={{ fontSize: 10, color: '#aaa' }}>
                   {t.content.split('\n').length} lines
                 </span>
                 <button
