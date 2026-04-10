@@ -344,6 +344,29 @@ async function fetchMdFiles(repo, branch, mdItems, token) {
       })
     }
   })
+  // Limit to avoid huge payloads — cap at 50 md files
+  const items = mdItems.slice(0, 50)
+  const results = []
+
+  // Fetch in parallel batches of 10
+  for (let i = 0; i < items.length; i += 10) {
+    const batch = items.slice(i, i + 10)
+    const contents = await Promise.all(
+      batch.map((item) => fetchFileContent(repo, branch, item.path, token))
+    )
+    batch.forEach((item, idx) => {
+      const content = contents[idx]
+      if (content !== null) {
+        results.push({
+          path: item.path,
+          name: getBasename(item.path),
+          size: item.size || content.length,
+          content,
+          type: classifyMdFile(item.path, content),
+        })
+      }
+    })
+  }
 
   return results
 }
