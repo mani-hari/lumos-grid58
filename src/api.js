@@ -6,7 +6,15 @@ async function request(path, options = {}) {
     ...options,
   })
   if (res.status === 204) return null
-  const data = await res.json()
+  const text = await res.text()
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error(
+      res.ok ? 'Invalid response from server' : `Server error (${res.status}). The request may have timed out — try a smaller repo.`
+    )
+  }
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`)
   return data
 }
