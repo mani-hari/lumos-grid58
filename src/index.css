@@ -4,104 +4,237 @@
 
 @layer base {
   body {
-    @apply bg-white text-gray-900 font-sans;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #000;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   * {
-    @apply border-gray-200;
+    border-color: #e5e5e5;
+  }
+
+  ::selection {
+    background: #D4A843;
+    color: #000;
   }
 }
 
 @layer components {
+  /* ---- Buttons ---- */
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-100 focus:outline-none;
+    border-radius: 4px;
   }
   .btn-primary {
-    @apply btn bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-900;
+    @apply btn text-white;
+    background: #000;
+    border: 1px solid #000;
+  }
+  .btn-primary:hover {
+    background: #222;
+    border-color: #222;
   }
   .btn-secondary {
-    @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500;
+    @apply btn bg-transparent;
+    border: 1px solid #222;
+    color: #000;
   }
-  .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  .btn-secondary:hover {
+    background: #f5f5f5;
   }
   .btn-ghost {
-    @apply btn text-gray-600 hover:text-gray-900 hover:bg-gray-100;
+    @apply btn bg-transparent border-0;
+    color: #666;
+  }
+  .btn-ghost:hover {
+    color: #000;
+    text-decoration: underline;
+  }
+  .btn-danger {
+    @apply btn text-white;
+    background: #000;
+    border: 1px solid #000;
+  }
+  .btn-danger:hover {
+    background: #333;
   }
   .btn-sm {
     @apply px-3 py-1.5 text-xs;
   }
 
+  /* ---- Inputs ---- */
   .input {
-    @apply w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-shadow;
+    @apply w-full px-3 py-2 text-sm bg-white;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    color: #000;
+    transition: border-color 100ms ease;
+  }
+  .input::placeholder {
+    color: #aaa;
+  }
+  .input:focus {
+    outline: 2px solid #000;
+    outline-offset: -1px;
+    border-color: transparent;
   }
 
+  /* ---- Badges ---- */
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full;
+    @apply inline-flex items-center px-2 py-0.5 text-xs font-medium;
+    border-radius: 100px;
   }
-  .badge-blue {
-    @apply badge bg-blue-50 text-blue-700;
-  }
-  .badge-green {
-    @apply badge bg-green-50 text-green-700;
-  }
-  .badge-amber {
-    @apply badge bg-amber-50 text-amber-700;
-  }
-  .badge-red {
-    @apply badge bg-red-50 text-red-700;
+  .badge-ochre {
+    @apply badge;
+    background: #D4A843;
+    color: #000;
   }
   .badge-gray {
-    @apply badge bg-gray-100 text-gray-600;
+    @apply badge;
+    background: #f5f5f5;
+    color: #666;
+    border: 1px solid #e5e5e5;
+  }
+  .badge-blue {
+    @apply badge;
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+  .badge-green {
+    @apply badge;
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+  .badge-amber {
+    @apply badge;
+    background: #D4A843;
+    color: #000;
+  }
+  .badge-red {
+    @apply badge;
+    background: #f5f5f5;
+    color: #000;
+    border: 1px solid #ddd;
   }
 
+  /* ---- Cards ---- */
   .card {
-    @apply bg-white border border-gray-200 rounded-xl p-5;
+    background: #fff;
+    border: 1px solid #222;
+    border-radius: 6px;
+    padding: 20px;
   }
 
+  /* ---- Endpoint Box ---- */
   .endpoint-box {
-    @apply bg-gray-50 border border-gray-200 rounded-lg p-3 font-mono text-xs;
+    background: #f5f5f5;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
   }
 }
 
-/* Markdown preview styles */
-.markdown-preview h1 { @apply text-2xl font-bold mb-4 mt-6; }
-.markdown-preview h2 { @apply text-xl font-semibold mb-3 mt-5; }
-.markdown-preview h3 { @apply text-lg font-semibold mb-2 mt-4; }
-.markdown-preview p { @apply mb-3 leading-relaxed; }
-.markdown-preview ul { @apply list-disc pl-6 mb-3 space-y-1; }
-.markdown-preview ol { @apply list-decimal pl-6 mb-3 space-y-1; }
-.markdown-preview li { @apply leading-relaxed; }
-.markdown-preview code { @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800; }
-.markdown-preview pre { @apply bg-gray-900 text-gray-100 p-4 rounded-lg mb-4 overflow-x-auto; }
-.markdown-preview pre code { @apply bg-transparent text-gray-100 p-0; }
-.markdown-preview blockquote { @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 mb-3; }
-.markdown-preview table { @apply w-full border-collapse mb-4; }
-.markdown-preview th { @apply border border-gray-300 px-3 py-2 bg-gray-50 font-semibold text-left text-sm; }
-.markdown-preview td { @apply border border-gray-300 px-3 py-2 text-sm; }
-.markdown-preview a { @apply text-blue-600 hover:underline; }
-.markdown-preview hr { @apply border-gray-300 my-6; }
-.markdown-preview input[type="checkbox"] { @apply mr-2; }
+/* ---- Markdown Preview (Monochrome) ---- */
+.markdown-preview h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 16px; margin-top: 24px; color: #000; }
+.markdown-preview h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; margin-top: 20px; color: #000; }
+.markdown-preview h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; margin-top: 16px; color: #000; }
+.markdown-preview p { margin-bottom: 12px; line-height: 1.7; color: #333; }
+.markdown-preview ul { list-style-type: disc; padding-left: 24px; margin-bottom: 12px; }
+.markdown-preview ol { list-style-type: decimal; padding-left: 24px; margin-bottom: 12px; }
+.markdown-preview li { line-height: 1.7; color: #333; margin-bottom: 4px; }
+.markdown-preview code {
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 0.85em;
+  font-family: 'JetBrains Mono', monospace;
+  color: #000;
+}
+.markdown-preview pre {
+  background: #000;
+  color: #ddd;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  border: 1px solid #222;
+}
+.markdown-preview pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: #ddd;
+  font-size: 13px;
+}
+.markdown-preview blockquote {
+  border-left: 3px solid #222;
+  padding-left: 16px;
+  font-style: italic;
+  color: #666;
+  margin-bottom: 12px;
+}
+.markdown-preview table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.markdown-preview th {
+  border: 1px solid #222;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  font-weight: 600;
+  text-align: left;
+  font-size: 13px;
+  color: #000;
+}
+.markdown-preview td {
+  border: 1px solid #e5e5e5;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #333;
+}
+.markdown-preview a { color: #000; text-decoration: underline; }
+.markdown-preview a:hover { color: #666; }
+.markdown-preview hr { border-color: #222; margin: 24px 0; }
+.markdown-preview input[type="checkbox"] { margin-right: 8px; accent-color: #000; }
 
-/* Editor textarea */
+/* ---- Editor textarea ---- */
 .skill-editor {
-  @apply w-full h-full font-mono text-sm leading-relaxed p-4 bg-white border-0 resize-none focus:outline-none;
+  width: 100%;
+  height: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 20px;
+  background: #fff;
+  color: #000;
+  border: 0;
+  resize: none;
   tab-size: 2;
 }
+.skill-editor:focus {
+  outline: none;
+}
+.skill-editor::placeholder {
+  color: #aaa;
+}
 
-/* Scrollbar styles */
+/* ---- Scrollbar ---- */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
-/* Animations */
+/* ---- Animations ---- */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in {
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 100ms ease-out;
 }
 
 @keyframes slideIn {
@@ -109,5 +242,94 @@
   to { opacity: 1; transform: translateX(0); }
 }
 .animate-slide-in {
-  animation: slideIn 0.15s ease-out;
+  animation: slideIn 100ms ease-out;
+}
+
+@keyframes pulse-bar {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.animate-pulse-bar {
+  animation: pulse-bar 1.2s ease-in-out infinite;
+}
+
+/* ---- Diff styles ---- */
+.diff-add {
+  background: #f5f5f5;
+  border-left: 3px solid #000;
+  padding: 2px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.diff-remove {
+  background: #f5f5f5;
+  border-left: 3px solid #aaa;
+  padding: 2px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-decoration: line-through;
+  color: #888;
+}
+
+/* ---- Health bar ---- */
+.health-bar {
+  height: 3px;
+  background: #e5e5e5;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.health-bar-fill {
+  height: 100%;
+  background: #000;
+  border-radius: 2px;
+  transition: width 300ms ease;
+}
+
+/* ---- Sidebar ---- */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #666;
+  transition: all 100ms ease;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+}
+.sidebar-nav-item:hover {
+  color: #000;
+}
+.sidebar-nav-item.active {
+  color: #000;
+  font-weight: 500;
+  border-left-color: #000;
+}
+
+/* ---- Terminal box ---- */
+.terminal-box {
+  background: #000;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 16px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #ddd;
+  position: relative;
+}
+
+/* ---- Thin separator ---- */
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #aaa;
+  font-size: 12px;
+}
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e5e5;
 }

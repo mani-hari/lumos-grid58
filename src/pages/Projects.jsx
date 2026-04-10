@@ -10,7 +10,6 @@ import {
   Copy,
   Check,
   ChevronRight,
-  Settings,
   X,
 } from 'lucide-react'
 import { api } from '../api'
@@ -126,11 +125,11 @@ export default function Projects() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div style={{ padding: 24, maxWidth: 1120, margin: '0 auto' }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 24 }}>
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Projects</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#000' }}>Projects</h1>
+          <p style={{ fontSize: 13, color: '#888', marginTop: 2 }}>
             Group skills, manage API keys, and configure webhooks
           </p>
         </div>
@@ -142,21 +141,23 @@ export default function Projects() {
 
       {/* New Project Form */}
       {showNew && (
-        <div className="card mb-4 animate-fade-in">
-          <h3 className="text-sm font-semibold mb-3">Create Project</h3>
-          <div className="space-y-2 mb-3">
+        <div className="card animate-fade-in" style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#000', marginBottom: 12 }}>Create Project</h3>
+          <div className="space-y-2" style={{ marginBottom: 12 }}>
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Project name..."
-              className="input text-sm"
+              className="input"
+              style={{ fontSize: 13 }}
               autoFocus
             />
             <input
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
               placeholder="Description (optional)"
-              className="input text-sm"
+              className="input"
+              style={{ fontSize: 13 }}
             />
           </div>
           <div className="flex gap-2">
@@ -168,34 +169,38 @@ export default function Projects() {
 
       <div className="flex gap-6">
         {/* Project List */}
-        <div className="w-72 shrink-0 space-y-2">
+        <div style={{ width: 280, flexShrink: 0 }} className="space-y-2">
           {loading ? (
-            <p className="text-sm text-gray-400 py-4">Loading...</p>
+            <p style={{ fontSize: 13, color: '#aaa', padding: '16px 0' }}>Loading...</p>
           ) : projects.length === 0 ? (
-            <div className="text-center py-8">
-              <FolderOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">No projects yet</p>
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <FolderOpen className="w-8 h-8 mx-auto" style={{ color: '#ddd', marginBottom: 8 }} />
+              <p style={{ fontSize: 13, color: '#aaa' }}>No projects yet</p>
             </div>
           ) : (
             projects.map((p) => (
               <button
                 key={p.id}
                 onClick={() => selectProject(p.id)}
-                className={`w-full text-left p-3 rounded-lg border transition-all ${
-                  selectedProject === p.id
-                    ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className="w-full text-left"
+                style={{
+                  padding: 12,
+                  borderRadius: 4,
+                  border: selectedProject === p.id ? '1px solid #000' : '1px solid #e5e5e5',
+                  background: selectedProject === p.id ? '#f5f5f5' : '#fff',
+                  cursor: 'pointer',
+                  transition: 'border-color 100ms',
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FolderOpen className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-900">{p.name}</span>
+                    <FolderOpen className="w-4 h-4" style={{ color: '#888' }} />
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#000' }}>{p.name}</span>
                   </div>
-                  <span className="text-[10px] text-gray-400">{p.skill_count} skills</span>
+                  <span style={{ fontSize: 10, color: '#aaa' }}>{p.skill_count} skills</span>
                 </div>
                 {p.description && (
-                  <p className="text-xs text-gray-500 mt-1 ml-6 truncate">{p.description}</p>
+                  <p className="truncate" style={{ fontSize: 12, color: '#888', marginTop: 4, paddingLeft: 24 }}>{p.description}</p>
                 )}
               </button>
             ))
@@ -205,23 +210,24 @@ export default function Projects() {
         {/* Project Detail */}
         <div className="flex-1 min-w-0">
           {!selectedProject ? (
-            <div className="text-center py-16 text-gray-400">
-              <FolderOpen className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Select a project to view details</p>
+            <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa' }}>
+              <FolderOpen className="w-10 h-10 mx-auto" style={{ marginBottom: 8, opacity: 0.4 }} />
+              <p style={{ fontSize: 13 }}>Select a project to view details</p>
             </div>
           ) : !projectDetail ? (
-            <p className="text-sm text-gray-400">Loading...</p>
+            <p style={{ fontSize: 13, color: '#aaa' }}>Loading...</p>
           ) : (
             <div className="space-y-6 animate-fade-in">
               {/* Project Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">{projectDetail.name}</h2>
-                  <p className="text-sm text-gray-500">{projectDetail.description}</p>
+                  <h2 style={{ fontSize: 16, fontWeight: 600, color: '#000' }}>{projectDetail.name}</h2>
+                  <p style={{ fontSize: 13, color: '#888' }}>{projectDetail.description}</p>
                 </div>
                 <button
                   onClick={() => handleDeleteProject(selectedProject)}
-                  className="btn-ghost btn-sm text-red-500"
+                  className="btn-ghost btn-sm"
+                  style={{ color: '#888', textDecoration: 'none' }}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -229,28 +235,28 @@ export default function Projects() {
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="card text-center">
-                  <p className="text-2xl font-bold text-gray-900">{projectDetail.stats.skill_count}</p>
-                  <p className="text-xs text-gray-500">Skills</p>
+                <div className="card" style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: '#000' }}>{projectDetail.stats.skill_count}</p>
+                  <p style={{ fontSize: 12, color: '#888' }}>Skills</p>
                 </div>
-                <div className="card text-center">
-                  <p className="text-2xl font-bold text-gray-900">{projectDetail.stats.total_access}</p>
-                  <p className="text-xs text-gray-500">Total Access</p>
+                <div className="card" style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: '#000' }}>{projectDetail.stats.total_access}</p>
+                  <p style={{ fontSize: 12, color: '#888' }}>Total Access</p>
                 </div>
-                <div className="card text-center">
-                  <p className="text-2xl font-bold text-gray-900">{projectDetail.stats.recent_access}</p>
-                  <p className="text-xs text-gray-500">Last 7 days</p>
+                <div className="card" style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: '#000' }}>{projectDetail.stats.recent_access}</p>
+                  <p style={{ fontSize: 12, color: '#888' }}>Last 7 days</p>
                 </div>
               </div>
 
               {/* Skills */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <h3 className="flex items-center gap-2" style={{ fontSize: 13, fontWeight: 600, color: '#000', marginBottom: 8 }}>
                   <Link className="w-4 h-4" />
                   Skills ({projectDetail.skills.length})
                 </h3>
                 {projectDetail.skills.length === 0 ? (
-                  <p className="text-xs text-gray-400 py-2">
+                  <p style={{ fontSize: 12, color: '#aaa', padding: '8px 0' }}>
                     No skills in this project. Assign skills from the skill editor.
                   </p>
                 ) : (
@@ -259,10 +265,18 @@ export default function Projects() {
                       <div
                         key={s.id}
                         onClick={() => navigate(`/skills/${s.id}`)}
-                        className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200 hover:border-gray-300 cursor-pointer group"
+                        className="flex items-center justify-between cursor-pointer group"
+                        style={{
+                          padding: 10,
+                          borderRadius: 4,
+                          border: '1px solid #e5e5e5',
+                          transition: 'border-color 100ms',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#222' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e5e5' }}
                       >
-                        <span className="text-sm text-gray-700">{s.name}</span>
-                        <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500" />
+                        <span style={{ fontSize: 13, color: '#000' }}>{s.name}</span>
+                        <ChevronRight className="w-3.5 h-3.5" style={{ color: '#ddd' }} />
                       </div>
                     ))}
                   </div>
@@ -271,22 +285,23 @@ export default function Projects() {
 
               {/* API Keys */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                  <h3 className="flex items-center gap-2" style={{ fontSize: 13, fontWeight: 600, color: '#000' }}>
                     <Key className="w-4 h-4" />
                     API Keys ({projectDetail.api_keys.length})
                   </h3>
-                  <button onClick={() => setShowAddKey(true)} className="btn-ghost btn-sm">
+                  <button onClick={() => setShowAddKey(true)} className="btn-ghost btn-sm" style={{ textDecoration: 'none' }}>
                     <Plus className="w-3 h-3" /> Add Key
                   </button>
                 </div>
                 {showAddKey && (
-                  <div className="card mb-2 animate-fade-in">
+                  <div className="card animate-fade-in" style={{ marginBottom: 8 }}>
                     <input
                       value={newKeyName}
                       onChange={(e) => setNewKeyName(e.target.value)}
                       placeholder="Key name..."
-                      className="input text-xs mb-2"
+                      className="input"
+                      style={{ fontSize: 12, marginBottom: 8 }}
                       autoFocus
                     />
                     <div className="flex gap-2">
@@ -304,22 +319,23 @@ export default function Projects() {
 
               {/* Webhooks */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                  <h3 className="flex items-center gap-2" style={{ fontSize: 13, fontWeight: 600, color: '#000' }}>
                     <Bell className="w-4 h-4" />
                     Webhooks
                   </h3>
-                  <button onClick={() => setShowWebhook(true)} className="btn-ghost btn-sm">
+                  <button onClick={() => setShowWebhook(true)} className="btn-ghost btn-sm" style={{ textDecoration: 'none' }}>
                     <Plus className="w-3 h-3" /> Add
                   </button>
                 </div>
                 {showWebhook && (
-                  <div className="card mb-2 animate-fade-in">
+                  <div className="card animate-fade-in" style={{ marginBottom: 8 }}>
                     <input
                       value={webhookUrl}
                       onChange={(e) => setWebhookUrl(e.target.value)}
                       placeholder="https://your-server.com/webhook"
-                      className="input text-xs mb-2"
+                      className="input"
+                      style={{ fontSize: 12, marginBottom: 8 }}
                       autoFocus
                     />
                     <div className="flex gap-2">
@@ -331,23 +347,32 @@ export default function Projects() {
                 {projectDetail.webhooks && projectDetail.webhooks.length > 0 ? (
                   <div className="space-y-1.5">
                     {projectDetail.webhooks.map((wh) => (
-                      <div key={wh.id} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200">
+                      <div
+                        key={wh.id}
+                        className="flex items-center justify-between"
+                        style={{ padding: 10, borderRadius: 4, border: '1px solid #e5e5e5' }}
+                      >
                         <div>
-                          <code className="text-xs text-gray-600">{wh.url}</code>
-                          <div className="flex gap-1 mt-1">
+                          <code style={{ fontSize: 12, color: '#333' }}>{wh.url}</code>
+                          <div className="flex gap-1" style={{ marginTop: 4 }}>
                             {wh.events?.map((e) => (
-                              <span key={e} className="badge-gray text-[9px]">{e}</span>
+                              <span key={e} className="badge-gray" style={{ fontSize: 9 }}>{e}</span>
                             ))}
                           </div>
                         </div>
-                        <button onClick={() => handleDeleteWebhook(wh.id)} className="p-1 text-gray-400 hover:text-red-500">
+                        <button
+                          onClick={() => handleDeleteWebhook(wh.id)}
+                          style={{ padding: 4, border: 0, background: 'transparent', cursor: 'pointer', color: '#aaa' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#000' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = '#aaa' }}
+                        >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 py-1">No webhooks configured</p>
+                  <p style={{ fontSize: 12, color: '#aaa', padding: '4px 0' }}>No webhooks configured</p>
                 )}
               </div>
             </div>
@@ -369,25 +394,44 @@ function ApiKeyRow({ apiKey, onDelete }) {
   }
 
   return (
-    <div className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200">
+    <div
+      className="flex items-center justify-between"
+      style={{ padding: 10, borderRadius: 4, border: '1px solid #e5e5e5' }}
+    >
       <div className="min-w-0">
-        <p className="text-xs font-medium text-gray-700">{apiKey.name}</p>
-        <code className="text-[10px] text-gray-400">
+        <p style={{ fontSize: 12, fontWeight: 500, color: '#000' }}>{apiKey.name}</p>
+        <code style={{ fontSize: 10, color: '#aaa', fontFamily: 'JetBrains Mono, monospace' }}>
           {showKey ? apiKey.key : `${apiKey.key.slice(0, 8)}${'*'.repeat(24)}`}
         </code>
-        <div className="flex gap-2 mt-0.5 text-[10px] text-gray-400">
+        <div className="flex gap-2" style={{ marginTop: 2, fontSize: 10, color: '#aaa' }}>
           {apiKey.usage_count > 0 && <span>Used {apiKey.usage_count}x</span>}
           {apiKey.last_used_at && <span>Last: {new Date(apiKey.last_used_at).toLocaleDateString()}</span>}
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <button onClick={() => setShowKey(!showKey)} className="btn-ghost btn-sm text-[10px]">
+        <button
+          onClick={() => setShowKey(!showKey)}
+          className="btn-ghost btn-sm"
+          style={{ fontSize: 10, textDecoration: 'none' }}
+        >
           {showKey ? 'Hide' : 'Show'}
         </button>
-        <button onClick={handleCopy} className="p-1 rounded hover:bg-gray-100">
-          {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+        <button
+          onClick={handleCopy}
+          style={{ padding: 4, border: 0, background: 'transparent', cursor: 'pointer' }}
+        >
+          {copied ? (
+            <Check className="w-3.5 h-3.5" style={{ color: '#000' }} />
+          ) : (
+            <Copy className="w-3.5 h-3.5" style={{ color: '#aaa' }} />
+          )}
         </button>
-        <button onClick={onDelete} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500">
+        <button
+          onClick={onDelete}
+          style={{ padding: 4, border: 0, background: 'transparent', cursor: 'pointer', color: '#aaa' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#000' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#aaa' }}
+        >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>

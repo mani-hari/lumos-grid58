@@ -324,6 +324,26 @@ async function fetchFileContent(repo, branch, path, token) {
 }
 
 async function fetchMdFiles(repo, branch, mdItems, token) {
+  // Cap to stay within Vercel's 10s timeout
+  const items = mdItems.slice(0, 20)
+  const results = []
+
+  // Fetch all in one parallel batch to minimize wall-clock time
+  const contents = await Promise.all(
+    items.map((item) => fetchFileContent(repo, branch, item.path, token).catch(() => null))
+  )
+  items.forEach((item, idx) => {
+    const content = contents[idx]
+    if (content !== null) {
+      results.push({
+        path: item.path,
+        name: getBasename(item.path),
+        size: item.size || content.length,
+        content,
+        type: classifyMdFile(item.path, content),
+      })
+    }
+  })
   // Limit to avoid huge payloads — cap at 50 md files
   const items = mdItems.slice(0, 50)
   const results = []
@@ -379,32 +399,42 @@ function classifyMdFile(path, content) {
 }
 
 async function scanCodeForPrompts(repo, branch, codeItems, token) {
-  // Only scan a reasonable number of files
-  const cap = Math.min(codeItems.length, 200)
+  // Prioritize files likely to contain prompts — filter by path heuristics
+  const prioritized = codeItems.filter((item) => {
+    const p = item.path.toLowerCase()
+    // Skip test files, type definitions, config, and generated code
+    if (p.includes('__test') || p.includes('.test.') || p.includes('.spec.')) return false
+    if (p.includes('.d.ts') || p.includes('types/') || p.includes('typings/')) return false
+    if (p.includes('node_modules/') || p.includes('dist/') || p.includes('.next/')) return false
+    // Prioritize files likely to have prompts
+    if (p.includes('prompt') || p.includes('agent') || p.includes('ai') || p.includes('llm')) return true
+    if (p.includes('system') || p.includes('instruction') || p.includes('chat')) return true
+    if (p.includes('lib/') || p.includes('src/') || p.includes('utils/') || p.includes('server/')) return true
+    return true
+  })
+
+  // Cap to stay within Vercel's 10s timeout — fetch all at once
+  const items = prioritized.slice(0, 30)
   const results = []
 
-  // Fetch in parallel batches of 10
-  for (let i = 0; i < cap; i += 10) {
-    const batch = codeItems.slice(i, i + 10)
-    const contents = await Promise.all(
-      batch.map((item) => fetchFileContent(repo, branch, item.path, token))
-    )
-    batch.forEach((item, idx) => {
-      const content = contents[idx]
-      if (!content) return
+  const contents = await Promise.all(
+    items.map((item) => fetchFileContent(repo, branch, item.path, token).catch(() => null))
+  )
+  items.forEach((item, idx) => {
+    const content = contents[idx]
+    if (!content) return
 
-      const prompts = extractPromptsFromCode(content, item.path)
-      if (prompts.length > 0) {
-        results.push({
-          path: item.path,
-          name: getBasename(item.path),
-          size: item.size || content.length,
-          prompts,
-          has_ai_sdk_import: detectAiSdkImport(content),
-        })
-      }
-    })
-  }
+    const prompts = extractPromptsFromCode(content, item.path)
+    if (prompts.length > 0) {
+      results.push({
+        path: item.path,
+        name: getBasename(item.path),
+        size: item.size || content.length,
+        prompts,
+        has_ai_sdk_import: detectAiSdkImport(content),
+      })
+    }
+  })
 
   return results
 }
@@ -579,8 +609,15 @@ async function detectMetadata(repo, branch, configItems, token) {
     dependencies: {},
   }
 
-  for (const item of configItems.slice(0, 10)) {
-    const content = await fetchFileContent(repo, branch, item.path, token)
+  // Fetch config files in parallel — just grab package.json and a few key ones
+  const cfgItems = configItems.slice(0, 5)
+  const cfgContents = await Promise.all(
+    cfgItems.map((item) => fetchFileContent(repo, branch, item.path, token).catch(() => null))
+  )
+
+  for (let ci = 0; ci < cfgItems.length; ci++) {
+    const item = cfgItems[ci]
+    const content = cfgContents[ci]
     if (!content) continue
     const basename = getBasename(item.path)
 

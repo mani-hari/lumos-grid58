@@ -6,7 +6,15 @@ async function request(path, options = {}) {
     ...options,
   })
   if (res.status === 204) return null
-  const data = await res.json()
+  const text = await res.text()
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error(
+      res.ok ? 'Invalid response from server' : `Server error (${res.status}). The request may have timed out — try a smaller repo.`
+    )
+  }
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`)
   return data
 }
@@ -68,4 +76,15 @@ export const api = {
   },
   applyOptimization: (data) => request('/optimizer/apply', { method: 'POST', body: JSON.stringify(data) }),
   getModels: () => request('/optimizer/models'),
+
+  // GitHub
+  githubAuthUrl: () => request('/github/auth'),
+  githubCallback: (code) => request(`/github/callback?code=${code}`),
+  githubRepos: (token) => request('/github/repos', { headers: { Authorization: `Bearer ${token}` } }),
+  scanRepo: (data) => request('/github/scan', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Analysis
+  analyzeSkill: (data) => request('/analyze/skill', { method: 'POST', body: JSON.stringify(data) }),
+  analyzeProject: (data) => request('/analyze/project', { method: 'POST', body: JSON.stringify(data) }),
+  optimizeSkill: (data) => request('/analyze/optimize', { method: 'POST', body: JSON.stringify(data) }),
 }
