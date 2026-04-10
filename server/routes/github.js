@@ -172,7 +172,12 @@ githubRouter.post('/scan', async (req, res) => {
 
   try {
     // 1. Determine the branch to scan
-    const targetBranch = branch || await getDefaultBranch(repo, token)
+    let targetBranch = branch || 'main'
+    try {
+      targetBranch = branch || await getDefaultBranch(repo, token)
+    } catch (e) {
+      console.error('getDefaultBranch failed, using "main":', e.message)
+    }
 
     // 2. Fetch the file tree
     const tree = await fetchTree(repo, targetBranch, token)
@@ -197,7 +202,6 @@ githubRouter.post('/scan', async (req, res) => {
         codeFiles.push(item)
       }
 
-      // Config / metadata detection
       if (
         basename === 'package.json' ||
         basename === 'next.config.js' ||
@@ -217,14 +221,12 @@ githubRouter.post('/scan', async (req, res) => {
       }
     }
 
-    // 4. Fetch .md file contents (all of them — they're usually small)
-    const skills = await fetchMdFiles(repo, targetBranch, mdFiles, token)
-
-    // 5. Scan code files for prompts (batch fetch, then analyze)
-    const promptsInCode = await scanCodeForPrompts(repo, targetBranch, codeFiles, token)
-
-    // 6. Detect metadata / tech stack
-    const metadata = await detectMetadata(repo, targetBranch, configFiles, token)
+    // 4-6: Run all three in parallel to stay within Vercel's timeout
+    const [skills, promptsInCode, metadata] = await Promise.all([
+      fetchMdFiles(repo, targetBranch, mdFiles, token).catch(() => []),
+      scanCodeForPrompts(repo, targetBranch, codeFiles, token).catch(() => []),
+      detectMetadata(repo, targetBranch, configFiles, token).catch(() => ({ repo, branch: targetBranch })),
+    ])
 
     // 7. Build condensed tree of relevant files
     const relevantPaths = [
@@ -311,16 +313,22 @@ async function fetchTree(repo, branch, token) {
 }
 
 async function fetchFileContent(repo, branch, path, token) {
-  const res = await ghFetch(
-    `${GITHUB_API}/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`,
-    token
-  )
-  if (!res.ok) return null
-  const data = await res.json()
-  if (data.encoding === 'base64' && data.content) {
-    return Buffer.from(data.content, 'base64').toString('utf-8')
+  try {
+    // Encode each path segment individually — do NOT encode slashes
+    const encodedPath = path.split('/').map(encodeURIComponent).join('/')
+    const res = await ghFetch(
+      `${GITHUB_API}/repos/${repo}/contents/${encodedPath}?ref=${branch}`,
+      token
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data.encoding === 'base64' && data.content) {
+      return Buffer.from(data.content, 'base64').toString('utf-8')
+    }
+    return data.content || null
+  } catch {
+    return null
   }
-  return data.content || null
 }
 
 async function fetchMdFiles(repo, branch, mdItems, token) {
