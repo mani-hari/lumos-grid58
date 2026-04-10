@@ -147,7 +147,13 @@ analyzeRouter.post('/project', async (req, res) => {
     const client = getClient()
     const targetModel = model || DEFAULT_MODEL
 
-    const systemPrompt = `You are an expert AI prompt/skill analyst for doso.dev, a hosted skills platform. You analyze collections of AI skills to find cross-cutting issues. Always respond with valid JSON only — no markdown fences, no extra text.`
+    const systemPrompt = `You are an expert AI prompt/skill analyst for doso.dev, a hosted skills platform. You analyze collections of AI skills and prompts with a critical, improvement-focused eye.
+
+CRITICAL RULES:
+- You MUST provide at least 3 actionable improvement suggestions, even for well-written skills. There is ALWAYS room for improvement — better structure, more specificity, clearer examples, model-specific optimizations, token efficiency, missing edge cases, etc.
+- Be specific and constructive. Generic advice like "make it clearer" is not acceptable — cite exact text and propose concrete alternatives.
+- Also write a brief project summary explaining what this codebase/project is about based on the skills you see.
+- Always respond with valid JSON only — no markdown fences, no extra text.`
 
     const skillsList = skills
       .map(
@@ -156,55 +162,58 @@ analyzeRouter.post('/project', async (req, res) => {
       )
       .join('\n\n')
 
-    const userPrompt = `Analyze the following collection of ${skills.length} AI skills/prompts and identify cross-cutting issues.
+    const userPrompt = `Analyze the following collection of ${skills.length} AI skill(s)/prompt(s) and provide a thorough analysis with SPECIFIC, ACTIONABLE improvement suggestions.
 
 ${skillsList}
 
 Return a JSON object with exactly this structure:
 {
+  "project_summary": "A 2-3 sentence description of what this project/codebase is about, based on the skills and prompts found. Describe the purpose and domain.",
+  "skill_summaries": [
+    {
+      "name": "Skill name",
+      "purpose": "What this skill does in one sentence",
+      "strengths": ["One strength"],
+      "weaknesses": ["One weakness"]
+    }
+  ],
   "cross_skill_contradictions": [
     {
       "skill_a": "Name of first skill",
       "skill_b": "Name of second skill",
-      "instruction_a": "What skill A says (quoted or paraphrased)",
-      "instruction_b": "What skill B says that contradicts it",
-      "severity": "high" | "medium" | "low",
-      "description": "Explanation of the contradiction"
+      "description": "Explanation of the contradiction",
+      "severity": "high" | "medium" | "low"
     }
   ],
-  "redundancies": [
+  "suggestions": [
     {
-      "instruction": "The repeated instruction (quoted or paraphrased)",
-      "found_in": ["Skill name 1", "Skill name 2"],
-      "suggestion": "How to consolidate"
+      "title": "Short title for the suggestion",
+      "skill_name": "Which skill this applies to (or 'All')",
+      "description": "Detailed, specific description of what to improve and HOW",
+      "priority": "high" | "medium" | "low",
+      "category": "clarity" | "specificity" | "structure" | "token_efficiency" | "missing_examples" | "edge_cases" | "model_optimization"
     }
   ],
   "coverage_gaps": [
     {
-      "gap": "Description of what's missing",
-      "relevant_skills": ["Skills that should address this"],
-      "suggestion": "How to fill the gap",
+      "gap": "What's missing",
+      "suggestion": "How to address it",
       "priority": "high" | "medium" | "low"
     }
   ],
   "health_score": {
     "overall": <0-100>,
     "breakdown": {
-      "consistency": <0-100, how consistent the skills are with each other>,
-      "coverage": <0-100, how comprehensive the skill set is>,
-      "efficiency": <0-100, how little redundancy exists>,
-      "clarity": <0-100, how clear the instructions are across skills>
+      "consistency": <0-100>,
+      "coverage": <0-100>,
+      "efficiency": <0-100>,
+      "clarity": <0-100>
     },
-    "summary": "Brief explanation of the project health"
-  },
-  "recommendations": [
-    {
-      "priority": "high" | "medium" | "low",
-      "action": "What to do",
-      "reason": "Why it matters"
-    }
-  ]
-}`
+    "summary": "Brief explanation"
+  }
+}
+
+REMEMBER: You MUST include at least 3 items in the "suggestions" array. Analyze each skill critically — look for vague instructions, missing examples, overly broad directives, token waste, structural issues, missing edge cases, and model-specific optimization opportunities.`
 
     const response = await client.messages.create({
       model: targetModel,

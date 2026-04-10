@@ -285,6 +285,16 @@
   transition: width 300ms ease;
 }
 
+/* ---- Shimmer animation for analysis pill ---- */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ---- Sidebar ---- */
 .sidebar-nav-item {
   display: flex;
