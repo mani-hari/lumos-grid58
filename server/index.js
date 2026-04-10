@@ -4,7 +4,6 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import { store } from './store.js'
-import { seedSkills, seedProjects } from './seeds.js'
 import { skillsRouter } from './routes/skills.js'
 import { projectsRouter } from './routes/projects.js'
 import { analyticsRouter } from './routes/analytics.js'
@@ -32,16 +31,10 @@ app.use((req, res, next) => {
   next()
 })
 
-// Load data from Redis on cold start, then seed if empty
+// Load data from Redis on cold start
 app.use(async (req, res, next) => {
   try {
     await store.ensureLoaded()
-    if (store.getSkills().length === 0) {
-      console.log('Seeding initial skills...')
-      seedSkills.forEach((skill) => store.createSkill(skill))
-      seedProjects.forEach((project) => store.createProject(project))
-      console.log(`Seeded ${seedSkills.length} skills and ${seedProjects.length} projects`)
-    }
     next()
   } catch (err) {
     console.error('Data load error:', err)

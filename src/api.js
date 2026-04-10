@@ -78,6 +78,7 @@ export const api = {
   getModels: () => request('/optimizer/models'),
 
   // GitHub
+  checkRepo: (data) => request('/github/check', { method: 'POST', body: JSON.stringify(data) }),
   githubAuthUrl: () => request('/github/auth'),
   githubCallback: (code) => request(`/github/callback?code=${code}`),
   githubRepos: (token) => request('/github/repos', { headers: { Authorization: `Bearer ${token}` } }),

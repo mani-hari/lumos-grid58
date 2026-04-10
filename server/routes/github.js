@@ -160,6 +160,42 @@ githubRouter.get('/repos', async (req, res) => {
 })
 
 // ---------------------------------------------------------------------------
+// Repo Check (public/private detection)
+// ---------------------------------------------------------------------------
+
+// POST /api/v1/github/check — Check if repo exists and whether it's public
+githubRouter.post('/check', async (req, res) => {
+  const { repo } = req.body
+  if (!repo) {
+    return res.status(400).json({ error: 'repo is required' })
+  }
+
+  try {
+    const ghRes = await fetch(`${GITHUB_API}/repos/${repo}`, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    })
+    if (ghRes.ok) {
+      const data = await ghRes.json()
+      return res.json({
+        exists: true,
+        private: data.private,
+        default_branch: data.default_branch,
+        name: data.name,
+        full_name: data.full_name,
+        description: data.description,
+      })
+    }
+    // 404 or 403 means private or doesn't exist
+    res.json({ exists: false, private: null })
+  } catch {
+    res.json({ exists: false, private: null })
+  }
+})
+
+// ---------------------------------------------------------------------------
 // Repo Scanning
 // ---------------------------------------------------------------------------
 
@@ -264,8 +300,8 @@ githubRouter.post('/scan', async (req, res) => {
 // POST /api/v1/github/import — Full pipeline: scan → create project → import skills
 githubRouter.post('/import', async (req, res) => {
   const { repo, branch, token } = req.body
-  if (!repo || !token) {
-    return res.status(400).json({ error: 'repo and token are required' })
+  if (!repo) {
+    return res.status(400).json({ error: 'repo is required' })
   }
 
   try {
@@ -430,15 +466,16 @@ function extractToken(req) {
 }
 
 function ghFetch(url, token, options = {}) {
-  return fetch(url, {
-    ...options,
-    headers: {
-      Accept: 'application/vnd.github+json',
-      Authorization: `Bearer ${token}`,
-      'X-GitHub-Api-Version': '2022-11-28',
-      ...(options.headers || {}),
-    },
-  })
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    ...(options.headers || {}),
+  }
+  // Only add Authorization header if token is provided (public repos work without it)
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  return fetch(url, { ...options, headers })
 }
 
 function getExtension(path) {
