@@ -202,8 +202,8 @@ githubRouter.post('/check', async (req, res) => {
 // POST /api/v1/github/scan — Scan a GitHub repo for skills/prompts
 githubRouter.post('/scan', async (req, res) => {
   const { repo, branch, token } = req.body
-  if (!repo || !token) {
-    return res.status(400).json({ error: 'repo and token are required' })
+  if (!repo) {
+    return res.status(400).json({ error: 'repo is required' })
   }
 
   try {
@@ -299,7 +299,7 @@ githubRouter.post('/scan', async (req, res) => {
 
 // POST /api/v1/github/import — Full pipeline: scan → create project → import skills
 githubRouter.post('/import', async (req, res) => {
-  const { repo, branch, token } = req.body
+  const { repo, branch, token, selectedFiles } = req.body
   if (!repo) {
     return res.status(400).json({ error: 'repo is required' })
   }
@@ -408,6 +408,9 @@ githubRouter.post('/import', async (req, res) => {
     // 9. Create a skill for each discovered .md file
     const createdSkills = []
     for (const mdSkill of skills) {
+      // If selectedFiles is provided, only import files in the list
+      if (selectedFiles && !selectedFiles.includes(mdSkill.path)) continue
+
       const nameWithoutExt = mdSkill.name.endsWith('.md')
         ? mdSkill.name.slice(0, -3)
         : mdSkill.name
@@ -418,6 +421,35 @@ githubRouter.post('/import', async (req, res) => {
         content: mdSkill.content,
         category: categoryMap[mdSkill.type] || 'General',
         tags: [mdSkill.path, mdSkill.type],
+        is_public: true,
+        version: 1,
+        project_id: project.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      store.createSkill(skill)
+      createdSkills.push(skill)
+    }
+
+    // 9b. Create skills for code files that contain prompts
+    for (const codeFile of promptsInCode) {
+      // If selectedFiles is provided, only import files in the list
+      if (selectedFiles && !selectedFiles.includes(codeFile.path)) continue
+
+      const ext = getExtension(codeFile.name)
+      const nameWithoutExt = ext ? codeFile.name.slice(0, -ext.length) : codeFile.name
+
+      // Build markdown content from extracted prompts
+      const promptSections = codeFile.prompts.map((p) => p.text).join('\n\n---\n\n')
+      const content = `# Prompts from ${codeFile.name}\n\n*Extracted from \`${codeFile.path}\`*\n\n${promptSections}`
+
+      const skill = {
+        id: uuid(),
+        name: nameWithoutExt,
+        description: '',
+        content,
+        category: 'General',
+        tags: [codeFile.path, 'prompt_in_code'],
         is_public: true,
         version: 1,
         project_id: project.id,
@@ -450,6 +482,85 @@ githubRouter.post('/import', async (req, res) => {
   } catch (err) {
     console.error('Import error:', err)
     res.status(500).json({ error: 'Import failed: ' + err.message })
+  }
+})
+
+// ---------------------------------------------------------------------------
+// Webhook
+// ---------------------------------------------------------------------------
+
+// POST /api/v1/github/webhook — Handle GitHub push events and update skills
+githubRouter.post('/webhook', async (req, res) => {
+  try {
+    const { ref, repository, commits } = req.body
+
+    if (!ref || !repository || !commits) {
+      return res.status(400).json({ error: 'Invalid webhook payload' })
+    }
+
+    // Parse branch from ref (e.g. "refs/heads/main" → "main")
+    const branch = ref.replace('refs/heads/', '')
+    const repoFullName = repository.full_name
+
+    // Collect all modified/added .md files from the push
+    const mdFilePaths = new Set()
+    for (const commit of commits) {
+      const changedFiles = [...(commit.modified || []), ...(commit.added || [])]
+      for (const filePath of changedFiles) {
+        if (getExtension(filePath) === MD_EXTENSION) {
+          mdFilePaths.add(filePath)
+        }
+      }
+    }
+
+    if (mdFilePaths.size === 0) {
+      return res.json({ updated: [], message: 'No .md files changed' })
+    }
+
+    // For each changed .md file, fetch new content and update matching skills
+    const updated = []
+    const notFound = []
+
+    for (const filePath of mdFilePaths) {
+      // Find skills in the store that match by tags[0] (the path)
+      const allSkills = store.getSkills()
+      const matchingSkill = allSkills.find(
+        (s) => s.tags && s.tags.length > 0 && s.tags[0] === filePath
+      )
+
+      if (!matchingSkill) {
+        notFound.push(filePath)
+        continue
+      }
+
+      // Fetch the updated content from GitHub (no token — webhook context)
+      const content = await fetchFileContent(repoFullName, branch, filePath, null)
+      if (content === null) {
+        notFound.push(filePath)
+        continue
+      }
+
+      // Update the skill with new content
+      store.updateSkill(matchingSkill.id, {
+        content,
+        change_summary: `Updated via GitHub webhook (push to ${branch})`,
+      })
+
+      updated.push({
+        skill_id: matchingSkill.id,
+        skill_name: matchingSkill.name,
+        path: filePath,
+      })
+    }
+
+    res.json({
+      updated,
+      not_found: notFound,
+      message: `Updated ${updated.length} skill(s), ${notFound.length} file(s) had no matching skill`,
+    })
+  } catch (err) {
+    console.error('Webhook error:', err)
+    res.status(500).json({ error: 'Webhook processing failed: ' + err.message })
   }
 })
 

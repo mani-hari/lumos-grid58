@@ -210,6 +210,11 @@ async function cmdScan(positional, flags) {
         if (match.preview) {
           console.log(`    ${d.gray('  "' + match.preview.slice(0, 80) + '"')}`);
         }
+        if (match.text) {
+          const truncated = match.text.replace(/\n/g, ' ').slice(0, 100);
+          const suffix = match.text.length > 100 ? '...' : '';
+          console.log(`    ${d.gray('  prompt:')} ${d.cyan('"' + truncated + suffix + '"')}`);
+        }
       }
       console.log('');
     }
@@ -236,13 +241,81 @@ async function cmdScan(positional, flags) {
   console.log('');
 
   // ── Post-scan: offer to import to doso.dev ──
-  if (results.skills.length > 0 && !flags.json) {
+  if ((results.skills.length > 0 || results.prompts.length > 0) && !flags.json) {
     const answer = await ask(
       `  ${d.boldWhite('Import these skills to doso.dev?')} ${d.gray('(Y/n)')} `
     );
 
     if (!answer || answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
       const api = await getApi();
+
+      // Build a combined list of all discovered files
+      const allFiles = [];
+      for (const skill of results.skills) {
+        allFiles.push({
+          type: 'skill',
+          label: skill.name,
+          typeLabel: 'skill',
+          path: skill.fullPath,
+          title: skill.title,
+          name: skill.name,
+          source: skill,
+        });
+      }
+      for (const prompt of results.prompts) {
+        allFiles.push({
+          type: 'prompt',
+          label: prompt.path,
+          typeLabel: 'prompt in code',
+          path: prompt.fullPath || prompt.path,
+          source: prompt,
+        });
+      }
+
+      // File selection step (skip if --all flag is set)
+      let selectedFiles = allFiles;
+
+      if (!flags.all) {
+        console.log('');
+        console.log(`  ${d.boldWhite('Files to import:')}`);
+        console.log('');
+        for (let i = 0; i < allFiles.length; i++) {
+          const f = allFiles[i];
+          const num = `[${i + 1}]`;
+          const typeTag = f.type === 'skill'
+            ? f.name.toLowerCase().endsWith('.md') && !f.name.toLowerCase().includes('readme')
+              ? '(skill)'
+              : f.name.toLowerCase().includes('readme')
+                ? '(documentation)'
+                : '(skill)'
+            : '(prompt in code)';
+          console.log(`  ${d.gray(num)} ${d.green('\u2713')} ${f.label.padEnd(28)} ${d.gray(typeTag)}`);
+        }
+        console.log('');
+
+        const deselect = await ask(
+          `  ${d.boldWhite('Deselect files?')} ${d.gray('Enter numbers (e.g. 2,4) or press Enter to import all:')} `
+        );
+
+        if (deselect) {
+          const indices = deselect
+            .split(',')
+            .map(s => parseInt(s.trim(), 10))
+            .filter(n => !isNaN(n) && n >= 1 && n <= allFiles.length);
+          const excludeSet = new Set(indices.map(n => n - 1));
+          selectedFiles = allFiles.filter((_, idx) => !excludeSet.has(idx));
+        }
+      }
+
+      if (selectedFiles.length === 0) {
+        console.log('');
+        d.info('No files selected. Skipping import.');
+        console.log('');
+        return;
+      }
+
+      console.log('');
+      console.log(`  Importing ${d.boldYellow(String(selectedFiles.length))} files...`);
 
       // Detect git remote for project name
       const repoUrl = detectGitRemote(targetPath) || basename(targetPath);
@@ -252,29 +325,36 @@ async function cmdScan(positional, flags) {
         .split('/')
         .pop() || basename(targetPath);
 
-      const sp2 = d.spinner('Creating project and importing skills...');
+      const sp2 = d.spinner('Creating project and importing files...');
 
       try {
         // Create project
         const projectRes = await api.createSkill({
           name: repoName,
           description: `Imported from ${repoUrl}`,
+          selectedFiles: selectedFiles.map(f => f.path),
         });
 
-        // Import each skill
+        // Import each selected file
         let imported = 0;
-        for (const skill of results.skills) {
+        const totalCount = selectedFiles.length;
+        for (const file of selectedFiles) {
           try {
-            const content = readFileSync(skill.fullPath, 'utf-8');
-            await api.pushSkill(skill.title || skill.name.replace(/\.md$/, ''), content);
+            if (file.type === 'skill') {
+              const content = readFileSync(file.path, 'utf-8');
+              await api.pushSkill(file.title || file.name.replace(/\.md$/, ''), content);
+            } else {
+              const content = readFileSync(file.path, 'utf-8');
+              await api.pushSkill(basename(file.path), content);
+            }
             imported++;
-            sp2.update(`Importing skills... (${imported}/${results.skills.length})`);
+            sp2.update(`Importing files... (${imported}/${totalCount})`);
           } catch {
             // skip individual failures
           }
         }
 
-        sp2.stop(`Imported ${d.boldYellow(String(imported))} skills to doso.dev`);
+        sp2.stop(`Imported ${d.boldYellow(String(imported))} files to doso.dev`);
 
         const baseUrl = api.getApiBaseUrl();
         const projectUrl = baseUrl;
@@ -791,6 +871,7 @@ async function cmdHelp() {
   console.log('');
   console.log(d.boldWhite('  Scan options:'));
   console.log(`    ${d.gray('--json')}               ${d.gray('Output results as JSON')}`);
+  console.log(`    ${d.gray('--all')}                ${d.gray('Skip file selection and import all files')}`);
   console.log('');
   console.log(d.boldWhite('  Connect options:'));
   console.log(`    ${d.gray('--token <pat>')}        ${d.gray('GitHub personal access token')}`);

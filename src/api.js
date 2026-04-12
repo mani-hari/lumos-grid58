@@ -89,4 +89,22 @@ export const api = {
   analyzeSkill: (data) => request('/analyze/skill', { method: 'POST', body: JSON.stringify(data) }),
   analyzeProject: (data) => request('/analyze/project', { method: 'POST', body: JSON.stringify(data) }),
   optimizeSkill: (data) => request('/analyze/optimize', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Webhook
+  getWebhookStatus: (projectId) => request(`/webhook/status/${projectId}`),
+  configureWebhook: (projectId, data) => request(`/webhook/configure/${projectId}`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Scheduler
+  runOptimization: (projectId) => request(`/scheduler/run/${projectId}`, { method: 'POST' }),
+  getSchedulerConfig: (projectId) => request(`/scheduler/config/${projectId}`),
+  setSchedulerConfig: (projectId, data) => request(`/scheduler/config/${projectId}`, { method: 'POST', body: JSON.stringify(data) }),
+  getPendingOptimizations: (projectId) => request(`/scheduler/pending/${projectId}`),
+  applyOptimization: (optId) => request(`/scheduler/apply/${optId}`, { method: 'POST' }),
+  dismissOptimization: (optId) => request(`/scheduler/dismiss/${optId}`, { method: 'POST' }),
+
+  // Playground
+  testPrompt: (data) => request('/scheduler/test/run', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Skill raw content (for includes preview)
+  getSkillRaw: (id) => fetch(`${BASE}/skills/${id}/raw`).then((r) => r.text()),
 }

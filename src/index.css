@@ -343,3 +343,72 @@
   height: 1px;
   background: #e5e5e5;
 }
+
+/* ---- Toggle switch ---- */
+.toggle-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  appearance: none;
+  background: #ddd;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 150ms;
+  border: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toggle-switch:checked {
+  background: #000;
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 150ms;
+}
+.toggle-switch:checked::after {
+  transform: translateX(14px);
+}
+
+/* ---- Lint warning bar ---- */
+.lint-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #fffdf5;
+  border-top: 1px solid #f0ead0;
+  font-size: 11px;
+  color: #8a7340;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.lint-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #f5f0e0;
+  border-radius: 100px;
+  font-size: 10px;
+  white-space: nowrap;
+  color: #8a7340;
+}
+
+/* ---- Include highlight ---- */
+.include-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #666;
+}

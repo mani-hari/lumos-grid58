@@ -62,6 +62,19 @@ skillsRouter.get('/:id', (req, res) => {
   })
 })
 
+// Resolve {{include:skill-name}} syntax in skill content
+function resolveIncludes(content, projectId, visited = new Set()) {
+  return content.replace(/\{\{include:([^}]+)\}\}/g, (match, refName) => {
+    const name = refName.trim()
+    if (visited.has(name)) return `<!-- circular include: ${name} -->`
+    visited.add(name)
+    const skills = store.getSkillsByProject(projectId)
+    const target = skills.find((s) => s.name === name || s.name === name.replace(/\.md$/, ''))
+    if (!target) return `<!-- include not found: ${name} -->`
+    return resolveIncludes(target.content || '', projectId, visited)
+  })
+}
+
 // Get raw skill content (for agent consumption)
 skillsRouter.get('/:id/raw', (req, res) => {
   const skill = store.getSkill(req.params.id)
@@ -80,7 +93,9 @@ skillsRouter.get('/:id/raw', (req, res) => {
     created_at: new Date().toISOString(),
   })
 
-  res.type('text/markdown').send(skill.content)
+  // Resolve includes before serving
+  const resolved = skill.project_id ? resolveIncludes(skill.content, skill.project_id) : skill.content
+  res.type('text/markdown').send(resolved)
 })
 
 // Get skill versions

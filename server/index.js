@@ -10,6 +10,8 @@ import { analyticsRouter } from './routes/analytics.js'
 import { optimizerRouter } from './routes/optimizer.js'
 import { githubRouter } from './routes/github.js'
 import { analyzeRouter } from './routes/analyze.js'
+import { webhookRouter } from './routes/webhook.js'
+import { schedulerRouter } from './routes/scheduler.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -49,6 +51,8 @@ app.use('/api/v1/analytics', analyticsRouter)
 app.use('/api/v1/optimizer', optimizerRouter)
 app.use('/api/v1/github', githubRouter)
 app.use('/api/v1/analyze', analyzeRouter)
+app.use('/api/v1/webhook', webhookRouter)
+app.use('/api/v1/scheduler', schedulerRouter)
 
 // MCP-compatible skill resource endpoint
 app.get('/api/v1/mcp/skills/:id', (req, res) => {
@@ -96,6 +100,8 @@ app.get('/api/v1', (req, res) => {
       optimizer: '/api/v1/optimizer',
       github: '/api/v1/github',
       analyze: '/api/v1/analyze',
+      webhook: '/api/v1/webhook',
+      scheduler: '/api/v1/scheduler',
       mcp: '/api/v1/mcp/skills/:id',
     },
   })

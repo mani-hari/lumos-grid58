@@ -16,6 +16,8 @@ import {
   Loader,
   AlertTriangle,
   Zap,
+  Clock,
+  BarChart2,
 } from 'lucide-react'
 import { api } from '../api'
 import MarkdownPreview from '../components/MarkdownPreview'
@@ -230,100 +232,47 @@ function FloatingToolbar({ skill }) {
 
   const base = window.location.origin
   const panels = [
-    {
-      key: 'api',
-      icon: Globe,
-      label: 'REST API',
-      url: `${base}/api/v1/skills/${skill.id}`,
-      desc: 'Full skill object as JSON',
-    },
-    {
-      key: 'mcp',
-      icon: Cpu,
-      label: 'MCP Resource',
-      url: `${base}/api/v1/mcp/skills/${skill.id}`,
-      desc: 'MCP-compatible resource format',
-    },
-    {
-      key: 'raw',
-      icon: Terminal,
-      label: 'Raw Markdown',
-      url: `${base}/api/v1/skills/${skill.id}/raw`,
-      desc: 'Plain text — paste in your agent',
-    },
+    { key: 'api', icon: Globe, label: 'REST API', url: `${base}/api/v1/skills/${skill.id}`, desc: 'Full skill object as JSON' },
+    { key: 'mcp', icon: Cpu, label: 'MCP Resource', url: `${base}/api/v1/mcp/skills/${skill.id}`, desc: 'MCP-compatible resource format' },
+    { key: 'raw', icon: Terminal, label: 'Raw Markdown', url: `${base}/api/v1/skills/${skill.id}/raw`, desc: 'Plain text — paste in your agent' },
   ]
 
   return (
-    <div style={{ position: 'absolute', right: 16, top: 16, zIndex: 10 }}>
-      {/* Icon buttons */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        background: '#fff',
-        border: '1px solid #e5e5e5',
-        borderRadius: 8,
-        padding: 4,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-      }}>
-        {panels.map((p) => (
-          <button
-            key={p.key}
-            onClick={() => setOpenPanel(openPanel === p.key ? null : p.key)}
-            title={p.label}
-            style={{
-              width: 32,
-              height: 32,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: 0,
-              borderRadius: 6,
-              background: openPanel === p.key ? '#f0f0f0' : 'transparent',
-              cursor: 'pointer',
-              color: openPanel === p.key ? '#000' : '#888',
-              transition: 'all 80ms',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f0f0' }}
-            onMouseLeave={(e) => { if (openPanel !== p.key) e.currentTarget.style.background = 'transparent' }}
-          >
-            <p.icon className="w-4 h-4" />
-          </button>
-        ))}
-      </div>
-
+    <>
+      {panels.map((p) => (
+        <button
+          key={p.key}
+          onClick={() => setOpenPanel(openPanel === p.key ? null : p.key)}
+          title={p.label}
+          style={{
+            width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: 0, borderRadius: 6, background: openPanel === p.key ? '#f0f0f0' : 'transparent',
+            cursor: 'pointer', color: openPanel === p.key ? '#000' : '#888', transition: 'all 80ms',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f0f0' }}
+          onMouseLeave={(e) => { if (openPanel !== p.key) e.currentTarget.style.background = 'transparent' }}
+        >
+          <p.icon className="w-4 h-4" />
+        </button>
+      ))}
       {/* Popover panel */}
       {openPanel && (() => {
         const p = panels.find((x) => x.key === openPanel)
         if (!p) return null
         return (
-          <div
-            className="animate-fade-in"
-            style={{
-              position: 'absolute',
-              right: 44,
-              top: 0,
-              width: 300,
-              background: '#fff',
-              border: '1px solid #e5e5e5',
-              borderRadius: 8,
-              padding: 14,
-              boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-            }}
-          >
+          <div className="animate-fade-in" style={{
+            position: 'absolute', right: 44, top: 0, width: 300,
+            background: '#fff', border: '1px solid #e5e5e5', borderRadius: 8, padding: 14,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+          }}>
             <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#000' }}>{p.label}</span>
               <CopyButton text={p.url} />
             </div>
             <div style={{
-              padding: '8px 10px',
-              background: '#f5f5f5',
-              borderRadius: 4,
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 11,
-              color: '#333',
-              wordBreak: 'break-all',
-              lineHeight: 1.5,
+              padding: '8px 10px', background: '#f5f5f5', borderRadius: 4,
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#333',
+              wordBreak: 'break-all', lineHeight: 1.5,
             }}>
               <span style={{ background: '#000', color: '#fff', padding: '1px 5px', borderRadius: 2, fontSize: 10, fontWeight: 700, marginRight: 6 }}>GET</span>
               {p.url}
@@ -332,7 +281,7 @@ function FloatingToolbar({ skill }) {
           </div>
         )
       })()}
-    </div>
+    </>
   )
 }
 
@@ -409,7 +358,7 @@ function AnalysisPill({ status, result, onToggle, expanded }) {
 
 // ── Analysis Dropdown Panel ───────────────────────────────
 
-function AnalysisDropdown({ result, onClose }) {
+function AnalysisDropdown({ result, onClose, scheduleConfig, onToggleSchedule, onSetFrequency, onRunNow, pendingCount }) {
   if (!result) return null
 
   const analysis = result
@@ -528,8 +477,130 @@ function AnalysisDropdown({ result, onClose }) {
           </div>
         </div>
       )}
+
+      {/* Scheduled auto-optimization */}
+      <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #f0f0f0' }}>
+        <h4 style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+          Auto-Optimize
+        </h4>
+        <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: '#333' }}>Enable scheduled optimization</span>
+          <input
+            type="checkbox"
+            className="toggle-switch"
+            checked={scheduleConfig?.enabled || false}
+            onChange={(e) => onToggleSchedule(e.target.checked)}
+          />
+        </div>
+        <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
+          <span style={{ fontSize: 11, color: '#888' }}>Frequency:</span>
+          {['daily', 'weekly'].map((f) => (
+            <button
+              key={f}
+              onClick={() => onSetFrequency(f)}
+              style={{
+                padding: '3px 10px', fontSize: 10, borderRadius: 2, cursor: 'pointer',
+                border: '1px solid #e5e5e5',
+                background: scheduleConfig?.frequency === f ? '#000' : '#fff',
+                color: scheduleConfig?.frequency === f ? '#fff' : '#666',
+              }}
+            >{f}</button>
+          ))}
+        </div>
+        {scheduleConfig?.last_run && (
+          <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8 }}>
+            Last run: {new Date(scheduleConfig.last_run).toLocaleDateString()}
+          </div>
+        )}
+        <div className="flex items-center gap-3">
+          <button onClick={onRunNow} className="btn-secondary btn-sm" style={{ fontSize: 10 }}>Run now</button>
+          {pendingCount > 0 && (
+            <span className="badge-ochre" style={{ fontSize: 10 }}>{pendingCount} pending</span>
+          )}
+        </div>
+      </div>
     </div>
   )
+}
+
+// ── Inline SVG Icons ─────────────────────────────────────
+
+function PencilIcon({ color = 'currentColor' }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.5">
+      <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" />
+    </svg>
+  )
+}
+
+function EyeIcon({ color = 'currentColor' }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.5">
+      <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" />
+      <circle cx="8" cy="8" r="2" />
+    </svg>
+  )
+}
+
+function BeakerIcon({ color = 'currentColor' }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.5">
+      <path d="M6 1v5l-4 6.5c-.3.5.1 1 .6 1h10.8c.5 0 .9-.5.6-1L10 6V1" />
+      <path d="M4.5 1h7" />
+    </svg>
+  )
+}
+
+// ── Prompt Linting ───────────────────────────────────────
+
+const VAGUE_PHRASES = ['be helpful', 'do your best', 'try to', 'if possible', 'as needed', 'when appropriate']
+
+function lintContent(text) {
+  if (!text) return []
+  const warnings = []
+  const lower = text.toLowerCase()
+
+  // Excessive length
+  if (text.length > 8000) {
+    warnings.push({ type: 'length', msg: `Content is ${Math.round(text.length / 1000)}k chars — consider trimming` })
+  }
+
+  // Vague phrases
+  for (const phrase of VAGUE_PHRASES) {
+    if (lower.includes(phrase)) {
+      warnings.push({ type: 'vague', msg: `Vague phrase: "${phrase}"` })
+      break // only show one
+    }
+  }
+
+  // Contradictions: "always" + "never" in similar context
+  if (lower.includes('always') && lower.includes('never')) {
+    warnings.push({ type: 'contradiction', msg: 'Contains both "always" and "never" — check for contradictions' })
+  }
+
+  // Missing structure
+  if (text.length > 500 && !text.includes('#')) {
+    warnings.push({ type: 'structure', msg: 'No headers found — consider adding structure with #' })
+  }
+
+  return warnings.slice(0, 3)
+}
+
+// ── Simple Diff Helper ───────────────────────────────────
+
+function simpleDiff(oldText, newText) {
+  const oldLines = (oldText || '').split('\n')
+  const newLines = (newText || '').split('\n')
+  const oldSet = new Set(oldLines)
+  const newSet = new Set(newLines)
+  const result = []
+  for (const line of oldLines) {
+    if (!newSet.has(line)) result.push({ type: 'remove', text: line })
+  }
+  for (const line of newLines) {
+    if (!oldSet.has(line)) result.push({ type: 'add', text: line })
+  }
+  return result
 }
 
 // ── Main ProjectView ──────────────────────────────────────
@@ -544,13 +615,40 @@ export default function ProjectView() {
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState('edit') // edit | preview
+  const [viewMode, setViewMode] = useState('edit') // edit | preview | test
 
   // Analysis state
   const [analysisStatus, setAnalysisStatus] = useState('idle')
   const [analysisResult, setAnalysisResult] = useState(null)
   const [analysisExpanded, setAnalysisExpanded] = useState(false)
   const analysisRanRef = useRef(false)
+
+  // Optimize state
+  const [optimizeStatus, setOptimizeStatus] = useState('idle') // idle | running | done
+  const [optimizeResult, setOptimizeResult] = useState(null)
+  const [optimizeOpen, setOptimizeOpen] = useState(false)
+
+  // Version history state
+  const [versions, setVersions] = useState([])
+  const [versionsOpen, setVersionsOpen] = useState(false)
+  const [selectedVersion, setSelectedVersion] = useState(null)
+
+  // Playground state
+  const [testMessage, setTestMessage] = useState('')
+  const [testResponse, setTestResponse] = useState(null)
+  const [testRunning, setTestRunning] = useState(false)
+
+  // Analytics state
+  const [analyticsData, setAnalyticsData] = useState(null)
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
+
+  // Scheduler state
+  const [scheduleConfig, setScheduleConfig] = useState(null)
+  const [pendingOpts, setPendingOpts] = useState([])
+
+  // Linting state
+  const [lintWarnings, setLintWarnings] = useState([])
+  const lintTimerRef = useRef(null)
 
   useEffect(() => {
     loadProject()
@@ -678,6 +776,119 @@ export default function ProjectView() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [handleSave])
 
+  // Linting: debounced re-lint on content change
+  useEffect(() => {
+    if (viewMode !== 'edit') return
+    clearTimeout(lintTimerRef.current)
+    lintTimerRef.current = setTimeout(() => {
+      setLintWarnings(lintContent(content))
+    }, 500)
+    return () => clearTimeout(lintTimerRef.current)
+  }, [content, viewMode])
+
+  // Load scheduler config when project loads
+  useEffect(() => {
+    if (!id) return
+    api.getSchedulerConfig(id).then((r) => setScheduleConfig(r.data)).catch(() => {})
+    api.getPendingOptimizations(id).then((r) => setPendingOpts(r.data || [])).catch(() => {})
+  }, [id])
+
+  // Optimize skill
+  async function handleOptimize() {
+    if (!selectedSkill) return
+    setOptimizeStatus('running')
+    setOptimizeOpen(true)
+    try {
+      const res = await api.optimizeSkill({ content, name: selectedSkill.name })
+      setOptimizeResult(res.data?.result || res.data)
+      setOptimizeStatus('done')
+    } catch {
+      setOptimizeStatus('idle')
+      setOptimizeOpen(false)
+    }
+  }
+
+  function applyOptimization() {
+    if (!optimizeResult?.optimized_content) return
+    setContent(optimizeResult.optimized_content)
+    setDirty(true)
+    setOptimizeOpen(false)
+    setOptimizeResult(null)
+    setOptimizeStatus('idle')
+  }
+
+  // Version history
+  async function loadVersions() {
+    if (!selectedSkill) return
+    try {
+      const res = await api.getVersions(selectedSkill.id)
+      setVersions(res.data || [])
+      setVersionsOpen(true)
+    } catch {
+      setVersions([])
+    }
+  }
+
+  function restoreVersion(v) {
+    setContent(v.content)
+    setDirty(true)
+    setVersionsOpen(false)
+    setSelectedVersion(null)
+  }
+
+  // Playground
+  async function runTest() {
+    if (!testMessage.trim()) return
+    setTestRunning(true)
+    setTestResponse(null)
+    try {
+      const res = await api.testPrompt({ system_prompt: content, user_message: testMessage })
+      setTestResponse(res)
+    } catch (err) {
+      setTestResponse({ error: err.message })
+    } finally {
+      setTestRunning(false)
+    }
+  }
+
+  // Analytics
+  async function loadAnalytics() {
+    if (!selectedSkill) return
+    try {
+      const res = await api.getSkillAnalytics(selectedSkill.id)
+      setAnalyticsData(res.data)
+      setAnalyticsOpen(true)
+    } catch {
+      setAnalyticsData(null)
+    }
+  }
+
+  // Scheduler
+  async function toggleSchedule(enabled) {
+    try {
+      const res = await api.setSchedulerConfig(id, { enabled, frequency: scheduleConfig?.frequency || 'weekly' })
+      setScheduleConfig(res.data)
+    } catch {}
+  }
+
+  async function setScheduleFrequency(frequency) {
+    try {
+      const res = await api.setSchedulerConfig(id, { enabled: scheduleConfig?.enabled, frequency })
+      setScheduleConfig(res.data)
+    } catch {}
+  }
+
+  async function runSchedulerNow() {
+    try {
+      await api.runOptimization(id)
+      const res = await api.getPendingOptimizations(id)
+      setPendingOpts(res.data || [])
+    } catch {}
+  }
+
+  // Has includes
+  const hasIncludes = content.includes('{{include:')
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -766,29 +977,63 @@ export default function ProjectView() {
               <span style={{ fontSize: 10, color: '#aaa', fontFamily: 'JetBrains Mono, monospace' }}>
                 ~{tokenEstimate.toLocaleString()} tokens
               </span>
-              <div className="flex" style={{ border: '1px solid #e5e5e5', borderRadius: 4, overflow: 'hidden' }}>
-                <button
-                  onClick={() => setViewMode('edit')}
-                  style={{
-                    padding: '4px 10px', fontSize: 11, fontWeight: 500, border: 0, cursor: 'pointer',
-                    background: viewMode === 'edit' ? '#000' : '#fff',
-                    color: viewMode === 'edit' ? '#fff' : '#888',
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setViewMode('preview')}
-                  style={{
-                    padding: '4px 10px', fontSize: 11, fontWeight: 500, border: 0, cursor: 'pointer',
-                    background: viewMode === 'preview' ? '#000' : '#fff',
-                    color: viewMode === 'preview' ? '#fff' : '#888',
-                    borderLeft: '1px solid #e5e5e5',
-                  }}
-                >
-                  Preview
-                </button>
+
+              {/* View mode toggle: icon-only square buttons */}
+              <div className="flex" style={{ gap: 2 }}>
+                {[
+                  { mode: 'edit', Icon: PencilIcon, title: 'Edit' },
+                  { mode: 'preview', Icon: EyeIcon, title: 'Preview' },
+                  { mode: 'test', Icon: BeakerIcon, title: 'Test' },
+                ].map(({ mode, Icon, title }) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    title={title}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      background: viewMode === mode ? '#000' : '#fff',
+                    }}
+                  >
+                    <Icon color={viewMode === mode ? '#fff' : '#888'} />
+                  </button>
+                ))}
               </div>
+
+              {/* Optimize button */}
+              <button
+                onClick={handleOptimize}
+                disabled={optimizeStatus === 'running'}
+                title="Optimize"
+                style={{
+                  width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid #e5e5e5', borderRadius: 2, cursor: 'pointer',
+                  background: optimizeStatus === 'running' ? '#f5f5f5' : '#fff',
+                }}
+              >
+                {optimizeStatus === 'running'
+                  ? <Loader className="w-3.5 h-3.5" style={{ color: '#888', animation: 'spin 1s linear infinite' }} />
+                  : <Zap className="w-3.5 h-3.5" style={{ color: '#D4A843' }} />}
+              </button>
+
+              {/* History button */}
+              <button
+                onClick={loadVersions}
+                title="Version history"
+                style={{
+                  width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid #e5e5e5', borderRadius: 2, cursor: 'pointer', background: '#fff',
+                }}
+              >
+                <Clock className="w-3.5 h-3.5" style={{ color: '#888' }} />
+              </button>
+
               <button
                 onClick={handleSave}
                 disabled={saving || !dirty}
@@ -808,7 +1053,118 @@ export default function ProjectView() {
         <AnalysisDropdown
           result={analysisResult}
           onClose={() => setAnalysisExpanded(false)}
+          scheduleConfig={scheduleConfig}
+          onToggleSchedule={toggleSchedule}
+          onSetFrequency={setScheduleFrequency}
+          onRunNow={runSchedulerNow}
+          pendingCount={pendingOpts.length}
         />
+      )}
+
+      {/* Optimize panel */}
+      {optimizeOpen && (
+        <div className="animate-fade-in" style={{
+          position: 'absolute', top: 44, left: 0, right: 0, zIndex: 19,
+          background: '#fff', borderBottom: '1px solid #e5e5e5',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '16px 20px', maxHeight: '50vh', overflowY: 'auto',
+        }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4" style={{ color: '#D4A843' }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#000' }}>Optimization</span>
+            </div>
+            <button onClick={() => { setOptimizeOpen(false); setOptimizeResult(null); setOptimizeStatus('idle') }}
+              style={{ fontSize: 11, color: '#888', background: 'none', border: 0, cursor: 'pointer' }}>Close</button>
+          </div>
+          {optimizeStatus === 'running' && (
+            <div className="flex items-center gap-2" style={{ padding: 12, color: '#888', fontSize: 13 }}>
+              <Loader className="w-4 h-4" style={{ animation: 'spin 1s linear infinite' }} /> Optimizing...
+            </div>
+          )}
+          {optimizeStatus === 'done' && optimizeResult && (
+            <>
+              {optimizeResult.diff_summary?.token_change && (
+                <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: 4, marginBottom: 12, fontSize: 12 }}>
+                  <strong>Tokens:</strong> {optimizeResult.diff_summary.token_change.original_estimate} → {optimizeResult.diff_summary.token_change.optimized_estimate}
+                  {optimizeResult.diff_summary.token_change.reduction_percent > 0 && (
+                    <span style={{ color: '#D4A843', marginLeft: 8 }}>
+                      ({optimizeResult.diff_summary.token_change.reduction_percent}% reduction)
+                    </span>
+                  )}
+                </div>
+              )}
+              {optimizeResult.diff_summary?.changes_made?.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  {optimizeResult.diff_summary.changes_made.map((c, i) => (
+                    <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid #f0f0f0', fontSize: 12, color: '#333' }}>
+                      <span className="badge-gray" style={{ fontSize: 9, marginRight: 6 }}>{c.type}</span>
+                      {c.description}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button onClick={applyOptimization} className="btn-primary btn-sm">Apply Changes</button>
+                <button onClick={() => { setOptimizeOpen(false); setOptimizeResult(null); setOptimizeStatus('idle') }}
+                  className="btn-secondary btn-sm">Dismiss</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Version history panel */}
+      {versionsOpen && (
+        <div className="animate-fade-in" style={{
+          position: 'absolute', top: 44, left: 0, right: 0, zIndex: 18,
+          background: '#fff', borderBottom: '1px solid #e5e5e5',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '16px 20px', maxHeight: '50vh', overflowY: 'auto',
+        }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4" style={{ color: '#888' }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#000' }}>Version History</span>
+            </div>
+            <button onClick={() => { setVersionsOpen(false); setSelectedVersion(null) }}
+              style={{ fontSize: 11, color: '#888', background: 'none', border: 0, cursor: 'pointer' }}>Close</button>
+          </div>
+          {versions.length === 0 ? (
+            <p style={{ fontSize: 12, color: '#aaa' }}>No version history yet.</p>
+          ) : (
+            versions.map((v) => (
+              <div key={v.id} style={{ padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#000' }}>v{v.version}</span>
+                    <span style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>{v.change_summary}</span>
+                    <span style={{ fontSize: 10, color: '#aaa', marginLeft: 8 }}>
+                      {new Date(v.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedVersion(selectedVersion?.id === v.id ? null : v)}
+                      className="btn-ghost btn-sm" style={{ fontSize: 10 }}
+                    >{selectedVersion?.id === v.id ? 'Hide diff' : 'Diff'}</button>
+                    <button onClick={() => restoreVersion(v)} className="btn-secondary btn-sm" style={{ fontSize: 10 }}>Restore</button>
+                  </div>
+                </div>
+                {selectedVersion?.id === v.id && (
+                  <div style={{ marginTop: 8, maxHeight: 200, overflowY: 'auto', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>
+                    {simpleDiff(v.content, content).map((d, i) => (
+                      <div key={i} className={d.type === 'add' ? 'diff-add' : 'diff-remove'}>
+                        {d.type === 'add' ? '+ ' : '- '}{d.text}
+                      </div>
+                    ))}
+                    {simpleDiff(v.content, content).length === 0 && (
+                      <p style={{ color: '#aaa', padding: 8 }}>No differences.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       )}
 
       {/* Main area: tree + editor */}
@@ -854,7 +1210,7 @@ export default function ProjectView() {
           )}
         </div>
 
-        {/* Center: Editor / Preview */}
+        {/* Center: Editor / Preview / Test */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ position: 'relative' }}>
           {!selectedSkill ? (
             <div className="flex-1 flex items-center justify-center">
@@ -865,20 +1221,175 @@ export default function ProjectView() {
             </div>
           ) : viewMode === 'preview' ? (
             <div className="flex-1 overflow-y-auto" style={{ padding: 24 }}>
+              {/* Resolve includes visually in preview */}
               <MarkdownPreview content={content} />
+              {hasIncludes && (
+                <div style={{ marginTop: 16, padding: '8px 12px', background: '#f0f0f0', borderRadius: 4, fontSize: 11, color: '#666' }}>
+                  This skill uses <code className="include-tag">{'{{include:...}}'}</code> syntax. Includes are resolved when served via the API.
+                </div>
+              )}
+            </div>
+          ) : viewMode === 'test' ? (
+            /* ── Playground / Test Mode ── */
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* System prompt (readonly) */}
+              <div style={{ flex: '0 0 auto', maxHeight: '30%', overflowY: 'auto', padding: '12px 16px', background: '#fafafa', borderBottom: '1px solid #e5e5e5' }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#888', textTransform: 'uppercase', marginBottom: 6 }}>System Prompt</div>
+                <pre style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#333', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6 }}>
+                  {content?.slice(0, 1000)}{content?.length > 1000 ? '...' : ''}
+                </pre>
+              </div>
+
+              {/* User message input + response */}
+              <div className="flex-1 flex flex-col overflow-hidden" style={{ padding: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#888', textTransform: 'uppercase', marginBottom: 6 }}>User Message</div>
+                <textarea
+                  value={testMessage}
+                  onChange={(e) => setTestMessage(e.target.value)}
+                  placeholder="Type a test message..."
+                  className="input"
+                  style={{ minHeight: 60, maxHeight: 100, resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, marginBottom: 8 }}
+                />
+                <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
+                  <button onClick={runTest} disabled={testRunning || !testMessage.trim()} className="btn-primary btn-sm"
+                    style={{ opacity: testRunning || !testMessage.trim() ? 0.4 : 1 }}>
+                    {testRunning ? <><Loader className="w-3 h-3" style={{ animation: 'spin 1s linear infinite' }} /> Running...</> : 'Run'}
+                  </button>
+                  {testResponse?.usage && (
+                    <span style={{ fontSize: 10, color: '#aaa', fontFamily: 'JetBrains Mono, monospace' }}>
+                      {testResponse.usage.input_tokens}+{testResponse.usage.output_tokens} tokens
+                    </span>
+                  )}
+                </div>
+
+                {/* Response area */}
+                {testResponse && (
+                  <div className="flex-1 overflow-y-auto" style={{
+                    padding: 12, background: testResponse.error ? '#fdf5f5' : '#fafafa',
+                    border: '1px solid #e5e5e5', borderRadius: 4,
+                  }}>
+                    {testResponse.error ? (
+                      <p style={{ fontSize: 12, color: '#c44' }}>{testResponse.error}</p>
+                    ) : (
+                      <div className="markdown-preview" style={{ fontSize: 13 }}>
+                        <MarkdownPreview content={testResponse.response || ''} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
-            <textarea
-              value={content}
-              onChange={(e) => handleContentChange(e.target.value)}
-              className="skill-editor w-full h-full flex-1"
-              spellCheck={false}
-              style={{ resize: 'none' }}
-            />
+            /* ── Edit Mode ── */
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Includes info bar */}
+              {hasIncludes && (
+                <div style={{ padding: '6px 12px', background: '#f8f8f5', borderBottom: '1px solid #e8e5d8', fontSize: 11, color: '#8a7340', flexShrink: 0 }}>
+                  This skill uses <strong>{'{{include:...}}'}</strong> syntax. Includes are resolved when served via API.
+                </div>
+              )}
+              <textarea
+                value={content}
+                onChange={(e) => handleContentChange(e.target.value)}
+                className="skill-editor w-full h-full flex-1"
+                spellCheck={false}
+                style={{ resize: 'none' }}
+              />
+              {/* Lint warnings bar */}
+              {lintWarnings.length > 0 && (
+                <div className="lint-bar">
+                  <AlertTriangle className="w-3 h-3 shrink-0" style={{ color: '#D4A843' }} />
+                  {lintWarnings.map((w, i) => (
+                    <span key={i} className="lint-pill">{w.msg}</span>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Floating toolbar (right side) */}
-          <FloatingToolbar skill={selectedSkill} />
+          {selectedSkill && (
+            <div style={{ position: 'absolute', right: 16, top: 16, zIndex: 10 }}>
+              <div style={{
+                display: 'flex', flexDirection: 'column', gap: 2,
+                background: '#fff', border: '1px solid #e5e5e5', borderRadius: 8, padding: 4,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              }}>
+                <FloatingToolbar skill={selectedSkill} />
+                {/* Analytics button */}
+                <button
+                  onClick={loadAnalytics}
+                  title="Usage Analytics"
+                  style={{
+                    width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: 0, borderRadius: 6, background: analyticsOpen ? '#f0f0f0' : 'transparent',
+                    cursor: 'pointer', color: analyticsOpen ? '#000' : '#888', transition: 'all 80ms',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f0f0f0' }}
+                  onMouseLeave={(e) => { if (!analyticsOpen) e.currentTarget.style.background = 'transparent' }}
+                >
+                  <BarChart2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Analytics popover */}
+              {analyticsOpen && (
+                <div className="animate-fade-in" style={{
+                  position: 'absolute', right: 44, top: 0, width: 280,
+                  background: '#fff', border: '1px solid #e5e5e5', borderRadius: 8, padding: 14,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                }}>
+                  <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#000' }}>Usage Analytics</span>
+                    <button onClick={() => setAnalyticsOpen(false)}
+                      style={{ fontSize: 10, color: '#888', background: 'none', border: 0, cursor: 'pointer' }}>Close</button>
+                  </div>
+                  {analyticsData ? (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+                        <div style={{ textAlign: 'center', padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
+                          <div style={{ fontSize: 18, fontWeight: 700 }}>{analyticsData.total || 0}</div>
+                          <div style={{ fontSize: 9, color: '#888' }}>Total Hits</div>
+                        </div>
+                        <div style={{ textAlign: 'center', padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
+                          <div style={{ fontSize: 18, fontWeight: 700 }}>{Object.keys(analyticsData.models || {}).length}</div>
+                          <div style={{ fontSize: 9, color: '#888' }}>Models</div>
+                        </div>
+                        <div style={{ textAlign: 'center', padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
+                          <div style={{ fontSize: 18, fontWeight: 700 }}>{Object.keys(analyticsData.agents || {}).length}</div>
+                          <div style={{ fontSize: 9, color: '#888' }}>Agents</div>
+                        </div>
+                      </div>
+                      {/* Daily bars (last 7 days) */}
+                      {analyticsData.daily && Object.keys(analyticsData.daily).length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#888', marginBottom: 6 }}>Daily Access</div>
+                          {Object.entries(analyticsData.daily).slice(-7).map(([day, count]) => {
+                            const maxCount = Math.max(...Object.values(analyticsData.daily).slice(-7))
+                            const pct = maxCount > 0 ? (count / maxCount) * 100 : 0
+                            return (
+                              <div key={day} className="flex items-center gap-2" style={{ marginBottom: 3 }}>
+                                <span style={{ fontSize: 9, color: '#aaa', width: 50, flexShrink: 0 }}>{day.slice(5)}</span>
+                                <div style={{ flex: 1, height: 6, background: '#f0f0f0', borderRadius: 3 }}>
+                                  <div style={{ height: '100%', width: `${pct}%`, background: '#000', borderRadius: 3 }} />
+                                </div>
+                                <span style={{ fontSize: 9, color: '#888', width: 20, textAlign: 'right' }}>{count}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                      {(!analyticsData.daily || Object.keys(analyticsData.daily).length === 0) && (
+                        <p style={{ fontSize: 11, color: '#aaa' }}>No usage data yet. Share the API endpoint to start tracking.</p>
+                      )}
+                    </>
+                  ) : (
+                    <p style={{ fontSize: 11, color: '#aaa' }}>Loading...</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

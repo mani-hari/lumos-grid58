@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  Terminal,
 } from 'lucide-react'
 import { api } from '../api'
 
@@ -32,7 +33,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [repoUrl, setRepoUrl] = useState('')
   const [token, setToken] = useState('')
-  const [step, setStep] = useState('landing') // landing | checking | needsToken | connecting | done
+  const [step, setStep] = useState('landing') // landing | checking | needsToken | selecting | connecting | done
   const [error, setError] = useState(null)
   const [projects, setProjects] = useState([])
   const [loadingProjects, setLoadingProjects] = useState(true)
@@ -42,6 +43,10 @@ export default function Dashboard() {
   const [importResult, setImportResult] = useState(null)
   const [treeOpen, setTreeOpen] = useState(true)
   const phaseTimersRef = useRef([])
+
+  // Selection flow
+  const [scanResult, setScanResult] = useState(null)
+  const [selectedFiles, setSelectedFiles] = useState(new Set())
 
   useEffect(() => {
     loadProjects()
@@ -71,8 +76,8 @@ export default function Dashboard() {
     try {
       const check = await api.checkRepo({ repo })
       if (check.exists && !check.private) {
-        // Public repo — go straight to import
-        startImport(repo, null)
+        // Public repo — scan for file selection
+        startScan(repo, null)
       } else {
         // Private or not found — ask for token
         setStep('needsToken')
@@ -83,8 +88,8 @@ export default function Dashboard() {
         }
       }
     } catch {
-      // If check fails, try import directly
-      startImport(repo, null)
+      // If check fails, try scan directly
+      startScan(repo, null)
     }
   }
 
@@ -96,10 +101,47 @@ export default function Dashboard() {
       return
     }
     setError(null)
-    startImport(repo, token.trim())
+    startScan(repo, token.trim())
   }
 
-  async function startImport(repo, authToken) {
+  async function startScan(repo, authToken) {
+    setStep('checking')
+    try {
+      const res = await api.scanRepo({
+        repo,
+        token: authToken || undefined,
+      })
+      const data = res.data || res
+      setScanResult(data)
+
+      // Build the initial selection set with all files selected
+      const allPaths = new Set()
+      const skills = data.skills || []
+      const prompts = data.prompts_in_code || []
+      skills.forEach((s) => allPaths.add(s.path))
+      prompts.forEach((p) => allPaths.add(p.path))
+      setSelectedFiles(allPaths)
+
+      setStep('selecting')
+    } catch (err) {
+      const msg = err.message || 'Scan failed'
+      if (msg.includes('Could not fetch repo tree') && !authToken) {
+        setStep('needsToken')
+        setError('Could not access this repository. It may be private — enter a GitHub token.')
+      } else {
+        setError(msg)
+        setStep('landing')
+      }
+    }
+  }
+
+  function handleImportSelected() {
+    const repo = parseRepo(repoUrl)
+    const authToken = token.trim() || null
+    startImport(repo, authToken, [...selectedFiles])
+  }
+
+  async function startImport(repo, authToken, selectedFilePaths) {
     setStep('connecting')
     setCurrentPhase(0)
     setImportResult(null)
@@ -115,6 +157,7 @@ export default function Dashboard() {
       const res = await api.importRepo({
         repo,
         token: authToken || undefined,
+        selectedFiles: selectedFilePaths,
       })
 
       phaseTimersRef.current.forEach(clearTimeout)
@@ -214,6 +257,162 @@ export default function Dashboard() {
             Token needs <strong>repo</strong> scope for private repositories.
           </p>
         </form>
+      </div>
+    )
+  }
+
+  // ── Selecting ──
+  if (step === 'selecting' && scanResult) {
+    const skills = scanResult.skills || []
+    const prompts = scanResult.prompts_in_code || []
+    const allFiles = [
+      ...skills.map((s) => ({ path: s.path, name: s.name || s.path.split('/').pop(), type: 'skill', icon: 'file' })),
+      ...prompts.map((p) => ({ path: p.path, name: p.name || p.path.split('/').pop(), type: 'prompt in code', icon: 'terminal' })),
+    ]
+    const totalCount = allFiles.length
+    const selectedCount = selectedFiles.size
+
+    function toggleFile(path) {
+      setSelectedFiles((prev) => {
+        const next = new Set(prev)
+        if (next.has(path)) {
+          next.delete(path)
+        } else {
+          next.add(path)
+        }
+        return next
+      })
+    }
+
+    function selectAll() {
+      setSelectedFiles(new Set(allFiles.map((f) => f.path)))
+    }
+
+    function selectNone() {
+      setSelectedFiles(new Set())
+    }
+
+    return (
+      <div className="h-full overflow-y-auto">
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 24px' }} className="animate-fade-in">
+          <button
+            type="button"
+            onClick={() => { setStep('landing'); setError(null); setScanResult(null) }}
+            style={{ fontSize: 12, color: '#888', background: 'none', border: 0, cursor: 'pointer', marginBottom: 24, padding: 0 }}
+          >
+            &larr; Back
+          </button>
+
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#000', marginBottom: 8 }}>
+            Select files to import
+          </h2>
+          <div style={{
+            padding: '8px 12px',
+            background: '#f5f5f5',
+            borderRadius: 4,
+            fontSize: 13,
+            color: '#000',
+            fontFamily: 'JetBrains Mono, monospace',
+            marginBottom: 20,
+            display: 'inline-block',
+          }}>
+            {parseRepo(repoUrl)}
+          </div>
+
+          {/* Select all / Select none + count */}
+          <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={selectAll}
+                style={{ fontSize: 11, color: '#888', background: 'none', border: 0, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+              >
+                Select all
+              </button>
+              <button
+                type="button"
+                onClick={selectNone}
+                style={{ fontSize: 11, color: '#888', background: 'none', border: 0, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+              >
+                Select none
+              </button>
+            </div>
+            <span style={{ fontSize: 12, color: '#888' }}>
+              {selectedCount} of {totalCount} selected
+            </span>
+          </div>
+
+          {/* File list */}
+          <div style={{
+            background: '#fff',
+            border: '1px solid #e5e5e5',
+            borderRadius: 6,
+            marginBottom: 20,
+          }}>
+            {allFiles.map((file, i) => (
+              <label
+                key={file.path}
+                className="flex items-center gap-3"
+                style={{
+                  padding: '10px 14px',
+                  borderBottom: i < allFiles.length - 1 ? '1px solid #f0f0f0' : 'none',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedFiles.has(file.path)}
+                  onChange={() => toggleFile(file.path)}
+                  style={{ accentColor: '#000', flexShrink: 0 }}
+                />
+                {file.icon === 'file' ? (
+                  <FileText className="w-3.5 h-3.5 shrink-0" style={{ color: '#D4A843' }} />
+                ) : (
+                  <Terminal className="w-3.5 h-3.5 shrink-0" style={{ color: '#888' }} />
+                )}
+                <div className="min-w-0" style={{ flex: 1 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#000' }}>
+                    {file.name}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#aaa', marginLeft: 6 }}>
+                    {file.path}
+                  </span>
+                </div>
+                <span
+                  className={file.type === 'skill' ? 'badge-gray' : 'badge-ochre'}
+                  style={{ fontSize: 10, flexShrink: 0 }}
+                >
+                  {file.type}
+                </span>
+              </label>
+            ))}
+            {allFiles.length === 0 && (
+              <div style={{ padding: '24px 14px', textAlign: 'center', fontSize: 13, color: '#888' }}>
+                No importable files found in this repository.
+              </div>
+            )}
+          </div>
+
+          {/* Import button */}
+          <button
+            type="button"
+            onClick={handleImportSelected}
+            disabled={selectedCount === 0}
+            className="btn-primary"
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              padding: '13px 24px',
+              fontSize: 15,
+              borderRadius: 6,
+              opacity: selectedCount === 0 ? 0.4 : 1,
+            }}
+          >
+            Import selected
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     )
   }
